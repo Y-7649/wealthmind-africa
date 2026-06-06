@@ -103,13 +103,14 @@ EXPENSE_CATEGORIES = [
 ]
 
 
-def register_user(username: str, password: str) -> tuple[bool, str]:
+def register_user(username: str, password: str, currency: str = "KES") -> tuple[bool, str]:
     """
     Create a new user account.
 
     Arguments:
         username: The chosen username (3–20 characters, letters/numbers/_ only)
         password: The chosen password (validated before this function is called)
+        currency: The user's preferred currency code (e.g. "KES", "USD", "GBP")
 
     Returns:
         (True, "success message")  if registration succeeded
@@ -133,8 +134,8 @@ def register_user(username: str, password: str) -> tuple[bool, str]:
     conn = get_connection()
     try:
         conn.execute(
-            "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-            (username, password_hash_str),
+            "INSERT INTO users (username, password_hash, currency) VALUES (?, ?, ?)",
+            (username, password_hash_str, currency),
         )
         conn.commit()
         return True, "Account created successfully."

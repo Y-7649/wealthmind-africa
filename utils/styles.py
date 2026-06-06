@@ -231,6 +231,12 @@ def inject_global_styles():
             transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1) !important;
         }
 
+        /* ── HIDE "PRESS ENTER TO SUBMIT FORM" TEXT ────────────────────── */
+
+        [data-testid="InputInstructions"] {
+            display: none !important;
+        }
+
         /* ── TABS ───────────────────────────────────────────────────────── */
 
         [data-testid="stTabs"] button[data-baseweb="tab"] {
@@ -244,11 +250,6 @@ def inject_global_styles():
         }
 
         /* ── SIDEBAR ────────────────────────────────────────────────────── */
-
-        [data-testid="stSidebar"] > div:first-child {
-            background: linear-gradient(180deg, #0A0E16 0%, #0C1018 60%, #0E1117 100%) !important;
-            border-right: 1px solid #1A2030 !important;
-        }
 
         [data-testid="stSidebarNavLink"] {
             border-radius: 8px !important;
@@ -456,6 +457,75 @@ def inject_global_styles():
             background: rgba(239,68,68,0.05) !important;
             transform: none !important;
             box-shadow: none !important;
+        }
+
+        /* ── MOBILE RESPONSIVE ───────────────────────────────────────────── */
+
+        @media (max-width: 768px) {
+
+            /* Tighter page padding on small screens */
+            .main .block-container {
+                padding: 0.75rem 0.75rem 2rem !important;
+            }
+
+            /* Smaller hero headline */
+            h1 {
+                font-size: 1.6rem !important;
+                letter-spacing: -0.02em !important;
+            }
+
+            h2 { font-size: 1.25rem !important; }
+            h3 { font-size: 1.1rem  !important; }
+
+            /* Metric cards — reduce padding on mobile */
+            [data-testid="stMetric"] {
+                padding: 0.75rem 0.9rem !important;
+            }
+
+            [data-testid="stMetricValue"] {
+                font-size: 1.1rem !important;
+            }
+
+            /* Feature card grid — single column on mobile */
+            /* (targets the inline grid in the landing hero) */
+            div[style*="grid-template-columns:1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* wm-card — remove hover lift on touch devices */
+            .wm-card:hover {
+                transform: none !important;
+            }
+
+            /* wm-badge — slightly smaller on mobile */
+            .wm-badge {
+                font-size: 0.72rem !important;
+                padding: 0.2rem 0.65rem !important;
+            }
+
+            /* Plotly charts — ensure they don't overflow */
+            .js-plotly-plot {
+                max-width: 100% !important;
+                overflow: hidden !important;
+            }
+
+            /* Sidebar toggle hint — shown only on mobile */
+            .mobile-nav-hint {
+                display: block !important;
+            }
+        }
+
+        /* Hidden on desktop, shown on mobile via above media query */
+        .mobile-nav-hint {
+            display: none;
+            background: rgba(0,196,159,0.07);
+            border: 1px solid rgba(0,196,159,0.2);
+            border-radius: 8px;
+            padding: 0.5rem 0.85rem;
+            font-size: 0.8rem;
+            color: #00C49F;
+            margin-bottom: 1rem;
+            text-align: center;
         }
 
         </style>

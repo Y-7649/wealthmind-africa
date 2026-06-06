@@ -40,6 +40,11 @@ currency = user.get("currency", "KES")
 
 render_sidebar("health_score")
 
+st.markdown(
+    '<div class="mobile-nav-hint">☰ &nbsp;Tap the arrow in the top-left to open navigation</div>',
+    unsafe_allow_html=True,
+)
+
 # ── CALCULATE SCORE ───────────────────────────────────────────────────────────
 
 scores = calculate_health_score(user_id)

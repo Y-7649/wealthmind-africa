@@ -44,8 +44,14 @@ st.set_page_config(
 inject_global_styles()
 
 # ── DATABASE INITIALISATION ───────────────────────────────────────────────────
+# Cached with st.cache_resource so it runs once per server process,
+# not on every page load or rerun.
 
-initialise_database()
+@st.cache_resource
+def _init_database():
+    initialise_database()
+
+_init_database()
 
 # ── SESSION STATE ─────────────────────────────────────────────────────────────
 
@@ -98,32 +104,20 @@ def show_landing_page():
 
     # ── TOP NAVIGATION BAR ────────────────────────────────────────────────────
 
-    nav_left, nav_right = st.columns([3, 1])
-
-    with nav_left:
-        st.markdown(
-            """
-            <span style='font-size:1.3rem; font-weight:800; color:#00C49F;
-                         letter-spacing:-0.025em;'>
-                🌍 WealthMind Africa
-            </span>
-            <span style='font-size:0.76rem; color:#445566; margin-left:0.7rem;
-                         letter-spacing:0.07em; text-transform:uppercase;
-                         vertical-align:middle;'>
-                Applied Economics Platform
-            </span>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with nav_right:
-        btn_col1, btn_col2 = st.columns(2)
-        with btn_col1:
-            if st.button("Login", use_container_width=True, type="secondary"):
-                st.session_state.auth_view = "login"
-        with btn_col2:
-            if st.button("Register", use_container_width=True, type="primary"):
-                st.session_state.auth_view = "register"
+    st.markdown(
+        """
+        <span style='font-size:1.3rem; font-weight:800; color:#00C49F;
+                     letter-spacing:-0.025em;'>
+            🌍 WealthMind Africa
+        </span>
+        <span style='font-size:0.76rem; color:#445566; margin-left:0.7rem;
+                     letter-spacing:0.07em; text-transform:uppercase;
+                     vertical-align:middle;'>
+            Applied Economics Platform
+        </span>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.divider()
 
@@ -218,12 +212,33 @@ def show_landing_page():
             unsafe_allow_html=True,
         )
 
-        login_tab, register_tab = st.tabs(["🔑 Login", "✏️ Register"])
+        # ── Form toggle — responds to the Login/Register nav buttons ──────────
+        tog_a, tog_b = st.columns(2)
+        with tog_a:
+            if st.button(
+                "🔑 Login",
+                use_container_width=True,
+                type="primary" if st.session_state.auth_view == "login" else "secondary",
+                key="auth_tog_login",
+            ):
+                st.session_state.auth_view = "login"
+                st.rerun()
+        with tog_b:
+            if st.button(
+                "✏️ Register",
+                use_container_width=True,
+                type="primary" if st.session_state.auth_view == "register" else "secondary",
+                key="auth_tog_register",
+            ):
+                st.session_state.auth_view = "register"
+                st.rerun()
+
+        st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
 
         # ── Login ─────────────────────────────────────────────────────────────
-        with login_tab:
+        if st.session_state.auth_view == "login":
             with st.form("login_form", clear_on_submit=False):
-                username  = st.text_input("Username",               key="login_user")
+                username  = st.text_input("Username",                  key="login_user")
                 password  = st.text_input("Password", type="password", key="login_pass")
                 submitted = st.form_submit_button(
                     "Login", use_container_width=True, type="primary"
@@ -242,13 +257,26 @@ def show_landing_page():
                         st.error("Incorrect username or password.")
 
         # ── Register ──────────────────────────────────────────────────────────
-        with register_tab:
+        else:
+            _CURRENCY_LABELS = {
+                "KES": "🇰🇪 KES — Kenyan Shilling",
+                "USD": "🇺🇸 USD — US Dollar",
+                "GBP": "🇬🇧 GBP — British Pound",
+                "EUR": "🇪🇺 EUR — Euro",
+                "INR": "🇮🇳 INR — Indian Rupee",
+            }
             with st.form("register_form", clear_on_submit=True):
                 new_user  = st.text_input("Choose a username",         key="reg_user")
                 new_pass  = st.text_input("Choose a password",
                                           type="password",             key="reg_pass")
                 conf_pass = st.text_input("Confirm password",
                                           type="password",             key="reg_conf")
+                currency_choice = st.selectbox(
+                    "Preferred currency",
+                    options=list(_CURRENCY_LABELS.keys()),
+                    format_func=lambda c: _CURRENCY_LABELS[c],
+                    key="reg_currency",
+                )
 
                 st.caption(
                     "Username: 3–20 characters, letters/numbers/_ only.  \n"
@@ -272,9 +300,10 @@ def show_landing_page():
                 elif new_pass != conf_pass:
                     st.error("Passwords do not match.")
                 else:
-                    ok, msg = register_user(new_user, new_pass)
+                    ok, msg = register_user(new_user, new_pass, currency=currency_choice)
                     if ok:
-                        st.success("Account created. Please log in.")
+                        st.success("Account created. Switch to Login to sign in.")
+                        st.session_state.auth_view = "login"
                     else:
                         st.error(msg)
 
@@ -379,6 +408,12 @@ def show_home_dashboard():
     user_id  = user["id"]
     currency = user.get("currency", "KES")
     now      = datetime.now()
+
+    # Mobile navigation hint — only visible on small screens via CSS
+    st.markdown(
+        '<div class="mobile-nav-hint">☰ &nbsp;Tap the arrow in the top-left to open navigation</div>',
+        unsafe_allow_html=True,
+    )
 
     # Welcome header with staggered entrance animation
     st.markdown(

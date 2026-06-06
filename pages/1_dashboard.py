@@ -62,6 +62,12 @@ now     = datetime.now()
 
 render_sidebar("dashboard")
 
+# Mobile navigation hint — hidden on desktop via CSS
+st.markdown(
+    '<div class="mobile-nav-hint">☰ &nbsp;Tap the arrow in the top-left to open navigation</div>',
+    unsafe_allow_html=True,
+)
+
 # ── PAGE HEADER ───────────────────────────────────────────────────────────────
 
 st.markdown(
@@ -150,8 +156,11 @@ with st.expander("➕ Add a Transaction", expanded=True):
             txn_amount = st.number_input(
                 f"Amount ({currency})",
                 min_value=0.01,
-                step=100.0,
+                value=None,
+                step=1.0,
                 format="%.2f",
+                placeholder="e.g. 5000",
+                help="Enter the amount as a plain number — no commas or symbols. Example: 5000 for 5,000.",
             )
 
         with form_col2:
@@ -181,20 +190,23 @@ with st.expander("➕ Add a Transaction", expanded=True):
 
     # Process the form submission outside the form block
     if submitted:
-        success, message = add_transaction(
-            user_id=user_id,
-            date_str=str(txn_date),
-            transaction_type=txn_type,
-            category=txn_category,
-            amount=txn_amount,
-            description=txn_description,
-        )
-
-        if success:
-            st.success(f"✅ Saved: {txn_category.replace('_', ' ').title()} — {currency} {txn_amount:,.2f}")
-            st.rerun()   # Refresh the page so the new transaction appears immediately
+        if txn_amount is None or txn_amount <= 0:
+            st.error("❌ Please enter an amount greater than zero.")
         else:
-            st.error(f"❌ {message}")
+            success, message = add_transaction(
+                user_id=user_id,
+                date_str=str(txn_date),
+                transaction_type=txn_type,
+                category=txn_category,
+                amount=txn_amount,
+                description=txn_description,
+            )
+
+            if success:
+                st.success(f"✅ Saved: {txn_category.replace('_', ' ').title()} — {currency} {txn_amount:,.2f}")
+                st.rerun()   # Refresh the page so the new transaction appears immediately
+            else:
+                st.error(f"❌ {message}")
 
 # ── RECENT TRANSACTIONS LEDGER ────────────────────────────────────────────────
 
@@ -263,8 +275,8 @@ with p1:
             A composite index measuring your financial position across
             four dimensions grounded in economic theory.
             <br><br>
-            <span style='color:#AAAAAA; font-size:0.85rem;'>
-            Coming in Week 2
+            <span style='color:#00C49F; font-size:0.85rem;'>
+            Friedman (1957) · Deaton (1991) · Hall (1978)
             </span>
         </div>
         """,
@@ -280,8 +292,8 @@ with p2:
             Your spending in real terms, adjusted for Kenya's CPI.
             Distinguishes nominal from real value changes.
             <br><br>
-            <span style='color:#AAAAAA; font-size:0.85rem;'>
-            Coming in Week 2
+            <span style='color:#00C49F; font-size:0.85rem;'>
+            Fisher equation · KNBS CPI methodology
             </span>
         </div>
         """,
@@ -297,8 +309,8 @@ with p3:
             Three scenarios projecting your net worth at 10 and 25 years,
             demonstrating the compound effect of savings rate changes.
             <br><br>
-            <span style='color:#AAAAAA; font-size:0.85rem;'>
-            Coming in Week 3
+            <span style='color:#00C49F; font-size:0.85rem;'>
+            Solow growth model · Ramsey–Cass–Koopmans
             </span>
         </div>
         """,
@@ -314,8 +326,8 @@ with p4:
             Statistical analysis to detect hyperbolic discounting —
             a behavioural economics concept — in your own spending data.
             <br><br>
-            <span style='color:#AAAAAA; font-size:0.85rem;'>
-            Coming in Week 3
+            <span style='color:#00C49F; font-size:0.85rem;'>
+            Laibson (1997) · O'Donoghue &amp; Rabin (1999)
             </span>
         </div>
         """,
