@@ -164,7 +164,7 @@ if len(monthly) >= 2:
             showgrid=True,
             gridcolor="#2A2A3A",
             color="#AAAAAA",
-            tickprefix="KES ",
+            tickprefix=f"{currency} ",
             tickformat=",.0f",
         ),
         legend=dict(bgcolor="#1C2333", bordercolor="#2A2A3A"),

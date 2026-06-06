@@ -47,7 +47,7 @@ st.markdown(
 
 # ── LOAD DATA ─────────────────────────────────────────────────────────────────
 
-result = calculate_present_bias(user_id)
+result = calculate_present_bias(user_id, currency=currency)
 
 # ── PAGE HEADER ───────────────────────────────────────────────────────────────
 
@@ -168,7 +168,7 @@ fig.update_layout(
         showgrid=True,
         gridcolor="#2A2A3A",
         color="#AAAAAA",
-        tickprefix="KES ",
+        tickprefix=f"{currency} ",
         tickformat=",.0f",
     ),
     showlegend=False,

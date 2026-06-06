@@ -41,6 +41,9 @@ st.set_page_config(
 
 # Inject design system CSS immediately — covers both landing page and
 # home dashboard.  render_sidebar() also calls this for all other pages.
+# inject_global_styles() is called inside render_sidebar() on every page.
+# On the landing page (no sidebar), we call it once here.
+# On authenticated pages render_sidebar() handles it — do NOT call it again.
 inject_global_styles()
 
 # ── DATABASE INITIALISATION ───────────────────────────────────────────────────

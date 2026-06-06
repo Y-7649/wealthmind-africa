@@ -189,7 +189,7 @@ fig.update_layout(
         showgrid=True,
         gridcolor="#2A2A3A",
         color="#AAAAAA",
-        tickprefix="KES ",
+        tickprefix=f"{currency} ",
         tickformat=",.0f",
     ),
     legend=dict(

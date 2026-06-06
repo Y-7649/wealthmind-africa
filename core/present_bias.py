@@ -65,7 +65,7 @@ def _classify_bias(index: float) -> tuple[str, str]:
 
 # ── MAIN CALCULATION FUNCTION ─────────────────────────────────────────────────
 
-def calculate_present_bias(user_id: int) -> dict:
+def calculate_present_bias(user_id: int, currency: str = "KES") -> dict:
     """
     Calculate the present bias index from the last 3 months of data.
 
@@ -144,7 +144,7 @@ def calculate_present_bias(user_id: int) -> dict:
     uniform_week      = avg_monthly_total / 4
     week1_excess      = max(avg_week["week_1"] - uniform_week, 0)
 
-    interpretation = _generate_interpretation(bias_index, bias_label, avg_week, week1_excess)
+    interpretation = _generate_interpretation(bias_index, bias_label, avg_week, week1_excess, currency)
 
     return {
         "has_data":                  True,
@@ -165,6 +165,7 @@ def _generate_interpretation(
     label: str,
     avg_week: dict,
     excess: float,
+    currency: str = "KES",
 ) -> str:
     """
     Generate a plain-English interpretation that connects the data
@@ -179,7 +180,7 @@ def _generate_interpretation(
             f"more tempting. Laibson (1997) identifies this as one of the most "
             f"common and costly departures from rational financial behaviour. "
             f"Based on your data, this pattern costs an estimated "
-            f"KES {excess:,.0f} per month in above-baseline early spending."
+            f"{currency} {excess:,.0f} per month in above-baseline early spending."
         )
     elif index >= 1.1:
         return (
