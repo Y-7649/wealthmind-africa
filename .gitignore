@@ -1,0 +1,21 @@
+# Database — contains personal data, never upload this
+wealthmind.db
+*.db
+
+# Python cache files — not needed on GitHub
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment — not needed on GitHub
+venv/
+.env/
+env/
+
+# Environment variable files — may contain secrets
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db

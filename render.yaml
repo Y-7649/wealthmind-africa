@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: wealthmind-africa
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0
+    plan: free
+    envVars:
+      - key: DB_PATH
+        value: /data/wealthmind.db
+    disk:
+      name: wealthmind-data
+      mountPath: /data
+      sizeGB: 1

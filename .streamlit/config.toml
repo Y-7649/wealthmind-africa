@@ -1,0 +1,24 @@
+# .streamlit/config.toml
+# WealthMind Africa — Streamlit Configuration
+#
+# This file configures the appearance and behaviour of the Streamlit app.
+# It is read automatically by Streamlit before the app starts.
+# No code changes are needed to apply these settings.
+
+[theme]
+# Dark theme — professional fintech aesthetic
+base              = "dark"
+primaryColor      = "#00C49F"       # Teal accent — used for buttons and highlights
+backgroundColor   = "#0E1117"       # Near-black page background
+secondaryBackgroundColor = "#1C2333" # Slightly lighter — used for cards and sidebars
+textColor         = "#FAFAFA"       # Off-white — easier on the eyes than pure white
+font              = "sans serif"
+
+[server]
+# Prevents Streamlit from opening a new browser tab every time
+# the app reloads during development
+headless = true
+
+[browser]
+# Suppresses the usage statistics prompt on first run
+gatherUsageStats = false
