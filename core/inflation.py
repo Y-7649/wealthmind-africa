@@ -29,6 +29,7 @@ from data.kenya_cpi import (
     annual_to_monthly,
     SSA_AVERAGE_INFLATION_2024,
     SSA_AVERAGE_INFLATION_2025,
+    SSA_AVERAGE_INFLATION_2026,
 )
 
 # Maps our transaction categories to the appropriate CPI sub-index
@@ -103,12 +104,13 @@ def get_inflation_analysis(user_id: int) -> dict:
 
     headline_inflation = get_inflation_rate(current_year, current_month, "headline")
 
-    # Regional comparison value
-    ssa_inflation = (
-        SSA_AVERAGE_INFLATION_2025
-        if current_year >= 2025
-        else SSA_AVERAGE_INFLATION_2024
-    )
+    # Regional comparison value — select the closest available annual figure
+    if current_year >= 2026:
+        ssa_inflation = SSA_AVERAGE_INFLATION_2026
+    elif current_year >= 2025:
+        ssa_inflation = SSA_AVERAGE_INFLATION_2025
+    else:
+        ssa_inflation = SSA_AVERAGE_INFLATION_2024
 
     # ── CATEGORY ANALYSIS ─────────────────────────────────────────────────────
     category_analysis = {}

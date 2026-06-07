@@ -29,6 +29,7 @@ from utils.sidebar    import render_sidebar
 from utils.footer     import render_footer
 from utils.styles     import inject_global_styles
 from utils.animations import get_animated_market_html
+from core.insights    import generate_insights
 
 # ── PAGE CONFIGURATION ────────────────────────────────────────────────────────
 
@@ -512,6 +513,123 @@ def show_home_dashboard():
                 "No transactions yet.  \n"
                 "Go to **Transactions** in the sidebar to add your first entry."
             )
+
+    st.divider()
+
+    # ── CROSS-MODULE INSIGHTS ─────────────────────────────────────────────────
+    # Central analytical layer: connects behaviour, health, inflation,
+    # and long-term projections into a unified economic analysis.
+
+    insights = generate_insights(user_id, currency)
+
+    st.markdown(
+        """
+        <div style="display:flex; align-items:center; gap:0.8rem;
+                    margin-bottom:1.2rem;">
+            <span style="font-size:1.4rem;">🔍</span>
+            <div>
+                <div style="font-size:1.1rem; font-weight:700; color:#FAFAFA;
+                            letter-spacing:-0.01em;">
+                    Cross-Module Economic Insights
+                </div>
+                <div style="font-size:0.8rem; color:#8899AA; margin-top:0.1rem;">
+                    Connecting behaviour, health, inflation, and long-term outcomes
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if not insights:
+        st.info(
+            "📋 **Insights will appear here** as you add more transactions.  \n"
+            "The Cross-Module Insights Engine connects your savings rate, present "
+            "bias, inflation context, and long-term projections into a unified "
+            "economic analysis once you have at least 2 months of data."
+        )
+    else:
+        _SEV_COLORS = {
+            "critical": "#FF4444",
+            "warning":  "#FF8800",
+            "positive": "#00C49F",
+            "info":     "#4499FF",
+        }
+        _SEV_LABELS = {
+            "critical": "Critical",
+            "warning":  "Warning",
+            "positive": "Positive Signal",
+            "info":     "Insight",
+        }
+        _PAGE_LABELS = {
+            "pages/2_health_score.py": "Open Financial Health Score →",
+            "pages/3_inflation.py":    "Open Kenya Inflation Context →",
+            "pages/4_projection.py":   "Open Wealth Projection →",
+            "pages/5_behaviour.py":    "Open Present Bias Detection →",
+        }
+
+        for ins in insights:
+            c     = _SEV_COLORS.get(ins["severity"], "#4499FF")
+            badge = _SEV_LABELS.get(ins["severity"], "Insight")
+
+            # Build optional impact block before the main f-string
+            if ins.get("impact"):
+                ic = "#00C49F" if ins.get("impact_positive") else "#FF8800"
+                imp_html = (
+                    f'<div style="margin-top:0.75rem; padding:0.55rem 0.85rem;'
+                    f' background:rgba(0,0,0,0.25); border-radius:6px;'
+                    f' border-left:2px solid {ic};">'
+                    f'<div style="font-size:0.67rem; color:#AAAAAA;'
+                    f' text-transform:uppercase; letter-spacing:0.07em;'
+                    f' margin-bottom:0.2rem;">Quantified Impact</div>'
+                    f'<div style="font-size:0.84rem; color:#FAFAFA;'
+                    f' line-height:1.5;">{ins["impact"]}</div></div>'
+                )
+            else:
+                imp_html = ""
+
+            st.markdown(
+                f'<div style="background:#1C2333; border-radius:10px;'
+                f' padding:1.2rem 1.4rem; border-left:4px solid {c};'
+                f' margin-bottom:1rem;">'
+
+                f'<div style="display:flex; justify-content:space-between;'
+                f' align-items:flex-start; margin-bottom:0.85rem;">'
+                f'<span style="font-size:1rem; font-weight:700; color:#FAFAFA;">'
+                f'{ins["icon"]} {ins["title"]}</span>'
+                f'<span style="font-size:0.69rem; color:{c}; font-weight:700;'
+                f' text-transform:uppercase; letter-spacing:0.09em;'
+                f' white-space:nowrap; margin-left:0.8rem;">{badge}</span></div>'
+
+                f'<div style="margin-bottom:0.65rem;">'
+                f'<div style="font-size:0.67rem; color:#445566;'
+                f' text-transform:uppercase; letter-spacing:0.07em;'
+                f' margin-bottom:0.2rem;">Observed</div>'
+                f'<div style="font-size:0.88rem; color:#CCDDE8; line-height:1.56;">'
+                f'{ins["observed"]}</div></div>'
+
+                f'<div style="margin-bottom:0.65rem;">'
+                f'<div style="font-size:0.67rem; color:#445566;'
+                f' text-transform:uppercase; letter-spacing:0.07em;'
+                f' margin-bottom:0.2rem;">Economic Concept</div>'
+                f'<div style="font-size:0.83rem; color:#8899AA; line-height:1.5;">'
+                f'{ins["concept"]}</div></div>'
+
+                f'<div style="margin-bottom:0.3rem;">'
+                f'<div style="font-size:0.67rem; color:#445566;'
+                f' text-transform:uppercase; letter-spacing:0.07em;'
+                f' margin-bottom:0.2rem;">Why It Matters</div>'
+                f'<div style="font-size:0.83rem; color:#8899AA; line-height:1.5;">'
+                f'{ins["why"]}</div></div>'
+
+                f'{imp_html}'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+            if ins.get("module_link"):
+                lbl = _PAGE_LABELS.get(ins["module_link"], "Go deeper →")
+                st.page_link(ins["module_link"], label=lbl)
 
     st.divider()
 
