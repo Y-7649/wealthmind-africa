@@ -357,9 +357,9 @@ def show_landing_page():
             with a strong interest in Finance, Economics, Fintech, and Behavioural
             Finance.
 
-            The project began as a CS50 final project and was transformed into a
-            platform for applied economic analysis — demonstrating that software
-            can be a vehicle for genuine economic insight, not just transaction
+            WealthMind Africa is an independent personal finance and applied
+            economics platform, built to demonstrate how software can serve as
+            a vehicle for genuine economic insight rather than simple transaction
             logging.
 
             The choice of a **Kenyan economic context** reflects a deliberate

@@ -106,11 +106,11 @@ st.markdown(
     recording what you spent. WealthMind Africa was built to solve a more
     interesting problem — **understanding what your spending means**.
 
-    The project started as a CS50 final submission: a basic command-line
-    expense tracker backed by CSV files. During that process, it became
-    clear that the most valuable questions in personal finance are not
-    answered by transaction logs. They are answered by the concepts studied
-    in Economics and Finance:
+    WealthMind Africa was independently designed from the ground up as a
+    personal economics platform — not a simple expense tracker. The core
+    insight driving the design was that the most valuable questions in
+    personal finance are not answered by transaction logs. They are answered
+    by the concepts studied in Economics and Finance:
 
     - **Is your savings rate consistent with long-term wealth accumulation?**
       *(Permanent Income Hypothesis — Friedman, 1957)*
