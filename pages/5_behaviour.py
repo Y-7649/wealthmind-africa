@@ -6,7 +6,7 @@ Detects hyperbolic discounting in the user's own spending data by
 comparing first-week vs last-week discretionary spending patterns.
 
 Academic foundation:
-    Laibson (1997), O'Donoghue & Rabin (1999), Kahneman & Tversky (1979)
+    Laibson (1997), O'Donoghue & Rabin (1999)
 """
 
 import streamlit as st
@@ -284,7 +284,7 @@ with st.expander("📚 Hyperbolic Discounting — The Theory Behind This Module"
         *References:*
         - *Laibson, D. (1997). Golden Eggs and Hyperbolic Discounting. QJE.*
         - *O'Donoghue, T. & Rabin, M. (1999). Doing It Now or Later. AER.*
-        - *Kahneman, D. & Tversky, A. (1979). Prospect Theory. Econometrica.*
+        - *Deaton, A. (1991). Saving and Liquidity Constraints. Econometrica.*
         """
     )
 

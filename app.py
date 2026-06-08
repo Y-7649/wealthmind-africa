@@ -161,6 +161,28 @@ def show_landing_page():
             unsafe_allow_html=True,
         )
 
+        # Kenya Context CTA — public page link
+        st.markdown(
+            """
+            <div class="wm-fade-3" style="margin-bottom:1rem;">
+                <a href="/kenya_context" target="_self"
+                   style="display:inline-flex; align-items:center; gap:0.5rem;
+                          background:rgba(0,196,159,0.08);
+                          border:1px solid rgba(0,196,159,0.3);
+                          border-radius:8px; padding:0.5rem 1.1rem;
+                          color:#00C49F; font-size:0.83rem; font-weight:600;
+                          text-decoration:none; letter-spacing:0.02em;
+                          transition:background 0.2s ease;">
+                    🌍 &nbsp;Explore Kenya Economic Context
+                    <span style="font-size:0.75rem; opacity:0.7;">— no account needed</span>
+                </a>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.page_link("pages/0_kenya_context.py",
+                     label="🌍  Kenya Economic Context — public dashboard")
+
         # Four module cards — 2 × 2 grid
         # NOTE: Every opening HTML tag must close on the same line —
         # Streamlit's Markdown parser only recognises HTML blocks when
@@ -183,7 +205,7 @@ def show_landing_page():
             '<div class="wm-card" style="padding:0.9rem;">'
             '<div style="font-size:0.93rem; font-weight:600; margin-bottom:0.35rem; color:#DDE8F4;">📈 Wealth Projection</div>'
             '<div style="color:#8899AA; font-size:0.79rem; line-height:1.55;">Compound growth over 25 years. Interactive savings rate slider. NSE-calibrated return assumptions.</div>'
-            '<div style="margin-top:0.5rem; font-size:0.71rem; color:#3A5060; font-style:italic;">Solow growth model · Ramsey–Cass–Koopmans</div>'
+            '<div style="margin-top:0.5rem; font-size:0.71rem; color:#3A5060; font-style:italic;">Solow growth model · Fisher (1930) · Modigliani (1954)</div>'
             '</div>'
 
             '<div class="wm-card" style="padding:0.9rem;">'
@@ -382,10 +404,12 @@ def show_landing_page():
                     yashkaria.pro@gmail.com
                 </a>
                 <br><br>
-                🐙 GitHub
-                <em style="color:#445566; font-size:0.83rem;">
-                    &nbsp;(link coming soon)
-                </em>
+                🐙
+                <a href="https://github.com/Y-7649/wealthmind-africa"
+                   target="_blank"
+                   style="color:#00C49F; text-decoration:none; font-size:0.83rem;">
+                    github.com/Y-7649/wealthmind-africa
+                </a>
                 <br><br>
                 <span style="color:#8899AA; font-size:0.81rem; line-height:1.65;">
                     Finance · Economics · Fintech<br>
@@ -438,14 +462,78 @@ def show_home_dashboard():
         unsafe_allow_html=True,
     )
 
+    # ── ECONOMIC TICKER ───────────────────────────────────────────────────────
+    # Scrolling macro data strip — mirrors the Kenya Context page aesthetic.
+    # Fetch summary data here so ticker and metric cards share one DB call.
+
+    from data.kenya_cpi import get_current_inflation
+
+    balance = get_current_balance(user_id)
+    monthly = get_monthly_summary(user_id, now.year, now.month)
+
+    _kenya_inf = get_current_inflation() * 100
+
+    if monthly["total_income"] > 0:
+        _sav_rate = (monthly["net"] / monthly["total_income"] * 100)
+    else:
+        _sav_rate = 0.0
+
+    _dash_ticker_items = [
+        f'🇰🇪 KENYA INFLATION <span style="color:#FF8800;font-weight:700;">'
+        f'{_kenya_inf:.1f}%</span>',
+        f'YOUR SAVINGS RATE <span style="color:#00C49F;font-weight:700;">'
+        f'{_sav_rate:.1f}%</span>',
+        'CBK POLICY RATE <span style="color:#FF8800;font-weight:700;">9.75%</span>',
+        'KENYA GDP GROWTH <span style="color:#00C49F;font-weight:700;">+5.4%</span>',
+        'NSE RETURN ASSUMPTION <span style="color:#4499FF;font-weight:700;">7.0% p.a.</span>',
+        'MOBILE MONEY PENETRATION <span style="color:#00C49F;font-weight:700;">75%</span>',
+        'FINANCIAL INCLUSION <span style="color:#00C49F;font-weight:700;">83.7%</span>',
+        'SSA INFLATION AVG <span style="color:#FF8800;font-weight:700;">14.0%</span>',
+    ]
+    _sep_t = '<span style="color:rgba(0,196,159,0.2);padding:0 0.5rem;font-size:0.65rem;">◆</span>'
+    _ticker_content = _sep_t.join(
+        f'<span style="font-family:Inter,monospace;font-size:0.76rem;font-weight:500;'
+        f'color:#7A9AB0;padding:0 1.2rem;">{item}</span>'
+        for item in _dash_ticker_items
+    )
+    # Duplicate for seamless CSS loop
+    _ticker_content = _ticker_content + _sep_t + _ticker_content
+
+    st.markdown(
+        f"""
+        <style>
+        @keyframes dash-ticker-scroll {{
+            0%   {{ transform: translateX(0); }}
+            100% {{ transform: translateX(-50%); }}
+        }}
+        .dash-ticker-wrapper {{
+            overflow: hidden;
+            background: rgba(8,13,24,0.7);
+            border: 1px solid rgba(0,196,159,0.1);
+            border-radius: 8px;
+            padding: 0.5rem 0;
+            margin-bottom: 1.2rem;
+        }}
+        .dash-ticker-inner {{
+            display: inline-block;
+            white-space: nowrap;
+            animation: dash-ticker-scroll 35s linear infinite;
+        }}
+        </style>
+        <div class="dash-ticker-wrapper">
+          <div class="dash-ticker-inner">{_ticker_content}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.divider()
 
     # ── SUMMARY METRICS ───────────────────────────────────────────────────────
     # CSS hover effects are applied automatically from inject_global_styles()
+    # balance and monthly already fetched above for the ticker strip.
 
-    balance = get_current_balance(user_id)
-    monthly = get_monthly_summary(user_id, now.year, now.month)
-    net     = monthly["net"]
+    net = monthly["net"]
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -691,7 +779,7 @@ def show_home_dashboard():
                     Wealth Projection
                 </div>
                 <div style="color:#8899AA; font-size:0.78rem; line-height:1.45;">
-                    Net worth at 10 and 25 years under three scenarios.
+                    Net worth at 10 and 25 years under four compound-growth scenarios.
                 </div>
             </div>
             """,

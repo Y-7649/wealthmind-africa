@@ -9,14 +9,15 @@ page.
 The current_page parameter controls which nav item is shown as active
 (highlighted with the teal accent).  Valid identifiers:
 
-    "home"         Home / overview dashboard
-    "dashboard"    Transaction ledger
-    "health_score" Financial Health Score
-    "inflation"    Kenya Inflation Context
-    "projection"   Wealth Projection
-    "behaviour"    Behavioural Analysis
-    "about"        About the Creator
-    ""             No item highlighted (default)
+    "kenya_context" Kenya Economic Context (public)
+    "home"          Home / overview dashboard
+    "dashboard"     Transaction ledger
+    "health_score"  Financial Health Score
+    "inflation"     Kenya Inflation Context
+    "projection"    Wealth Projection
+    "behaviour"     Behavioural Analysis
+    "about"         About the Creator
+    ""              No item highlighted (default)
 """
 
 import streamlit as st
@@ -103,6 +104,15 @@ def render_sidebar(current_page: str = ""):
             '</div>',
             unsafe_allow_html=True,
         )
+
+        # ── EXPLORE (public) ──────────────────────────────────────────────────
+
+        st.markdown(_section_label("Explore"), unsafe_allow_html=True)
+
+        if current_page == "kenya_context":
+            st.markdown(_active_item("🌍  Kenya Economic Context"), unsafe_allow_html=True)
+        else:
+            st.page_link("pages/0_kenya_context.py", label="🌍  Kenya Economic Context")
 
         # ── PLATFORM ─────────────────────────────────────────────────────────
 

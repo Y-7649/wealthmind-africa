@@ -306,11 +306,11 @@ with p3:
         <div style='background:#1C2333; padding:1rem; border-radius:8px;
                     border-left: 3px solid #00C49F;'>
             <strong>📈 Wealth Projection</strong><br><br>
-            Three scenarios projecting your net worth at 10 and 25 years,
+            Four scenarios projecting your net worth at 10 and 25 years,
             demonstrating the compound effect of savings rate changes.
             <br><br>
             <span style='color:#00C49F; font-size:0.85rem;'>
-            Solow growth model · Ramsey–Cass–Koopmans
+            Solow growth model · Fisher (1930) · Modigliani (1954)
             </span>
         </div>
         """,

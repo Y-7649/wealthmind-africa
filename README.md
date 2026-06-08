@@ -37,7 +37,7 @@ Real change = ((1 + nominal change) / (1 + inflation rate)) - 1
 ```
 
 ### 📈 Wealth Projection
-Three compound-growth scenarios projected over 25 years — demonstrating the intertemporal consequences of savings rate decisions. An interactive slider allows users to explore how marginal changes in savings rate affect long-term wealth.
+Four compound-growth scenarios projected over 25 years — demonstrating the intertemporal consequences of savings rate decisions. An interactive slider allows users to explore how marginal changes in savings rate affect long-term wealth.
 
 ### 🧠 Present Bias Detection
 Tests **Laibson's (1997) hyperbolic discounting model** against the user's own spending data. Computes the ratio of first-week to last-week discretionary spending — the observable signature of present bias.
@@ -49,7 +49,8 @@ Tests **Laibson's (1997) hyperbolic discounting model** against the user's own s
 This project is grounded in the following literature:
 
 - Friedman, M. (1957). *A Theory of the Consumption Function.* Princeton University Press.
-- Kahneman, D. & Tversky, A. (1979). Prospect Theory. *Econometrica, 47*(2).
+- Modigliani, F. & Brumberg, R. (1954). Utility Analysis and the Consumption Function. *Post-Keynesian Economics.*
+- Suri, T. & Jack, W. (2016). The long-run poverty and gender impacts of mobile money. *Science, 354*(6317).
 - Hall, R.E. (1978). Stochastic Implications of the Life Cycle–Permanent Income Hypothesis. *JPE, 86*(6).
 - Deaton, A. (1991). Saving and Liquidity Constraints. *Econometrica, 59*(5).
 - Laibson, D. (1997). Golden Eggs and Hyperbolic Discounting. *QJE, 112*(2).
@@ -88,9 +89,11 @@ wealthmind_africa/
 │   ├── health_score.py       # Financial Health Score engine
 │   ├── inflation.py          # Kenya Inflation Context engine
 │   ├── projection.py         # Wealth Projection engine
-│   └── present_bias.py       # Present Bias Detection engine
+│   ├── present_bias.py       # Present Bias Detection engine
+│   └── insights.py           # Cross-Module Economic Insights engine
 │
 ├── pages/
+│   ├── 0_kenya_context.py    # Public Kenya Economic Context dashboard
 │   ├── 1_dashboard.py        # Transaction ledger
 │   ├── 2_health_score.py     # Financial Health Score page
 │   ├── 3_inflation.py        # Kenya Inflation Context page
@@ -99,7 +102,8 @@ wealthmind_africa/
 │   └── 6_about.py            # About the Creator
 │
 ├── data/
-│   └── kenya_cpi.py          # KNBS CPI data and helper functions
+│   ├── kenya_cpi.py          # KNBS CPI data and helper functions
+│   └── kenya_macro.py        # Kenya macro indicators for public dashboard
 │
 ├── utils/
 │   ├── sidebar.py            # Shared sidebar component
@@ -120,7 +124,7 @@ wealthmind_africa/
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOURUSERNAME/wealthmind-africa.git
+git clone https://github.com/Y-7649/wealthmind-africa.git
 cd wealthmind-africa
 
 # Install dependencies
@@ -162,7 +166,7 @@ Building for this specific context reflects a core belief: **economic tools shou
 
 **Yash Karia**
 📧 [yashkaria.pro@gmail.com](mailto:yashkaria.pro@gmail.com)
-🐙 GitHub: *(link coming soon)*
+🐙 GitHub: [github.com/Y-7649/wealthmind-africa](https://github.com/Y-7649/wealthmind-africa)
 
 *Interests: Finance · Economics · Fintech · Behavioural Finance · Quantitative Analysis · East African Markets*
 

@@ -13,8 +13,8 @@ Academic foundation:
     O'Donoghue, T. & Rabin, M. (1999). Doing It Now or Later.
     American Economic Review, 89(1), 103–124.
 
-    Kahneman, D. & Tversky, A. (1979). Prospect Theory: An Analysis of
-    Decision Under Risk. Econometrica, 47(2), 263–292.
+    Deaton, A. (1991). Saving and Liquidity Constraints.
+    Econometrica, 59(5), 1221–1248.
 
 The theory:
     Standard economic models assume exponential discounting — people

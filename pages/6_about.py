@@ -79,7 +79,11 @@ with profile_right:
             <div style='margin-bottom:0.6rem;'>
                 🐙 GitHub
                 <em style='color:#777777; font-size:0.85rem;'>
-                    (link coming soon)
+                <a href="https://github.com/Y-7649/wealthmind-africa"
+                   target="_blank"
+                   style="color:#00C49F; text-decoration:none;">
+                    github.com/Y-7649/wealthmind-africa
+                </a>
                 </em>
             </div>
             <hr style='border-color:#2A2A3A; margin:1rem 0;'>
@@ -206,8 +210,8 @@ with t1:
             growth scenarios. The visual gap between saving 10% vs 15% of
             income over 25 years makes abstract theory visceral.<br><br>
             <em style='color:#AAAAAA; font-size:0.85rem;'>
-            Grounded in: Solow growth model, Fisher (time value of money),
-            Ramsey–Cass–Koopmans optimal savings theory
+            Grounded in: Solow growth model, Fisher (1930) intertemporal choice,
+            Modigliani (1954) life-cycle hypothesis
             </em>
         </div>
         """,
@@ -241,8 +245,7 @@ with t2:
             own spending data — detecting whether present bias is observable
             in their first-week vs last-week spending ratio.<br><br>
             <em style='color:#AAAAAA; font-size:0.85rem;'>
-            Grounded in: Laibson (1997), O'Donoghue & Rabin (1999),
-            Kahneman & Tversky (1979)
+            Grounded in: Laibson (1997), O'Donoghue &amp; Rabin (1999)
             </em>
         </div>
         """,
@@ -262,9 +265,6 @@ st.markdown(
 
     - **Friedman, M. (1957).** *A Theory of the Consumption Function.*
       Princeton University Press.
-
-    - **Kahneman, D. & Tversky, A. (1979).** Prospect Theory: An Analysis of
-      Decision Under Risk. *Econometrica, 47*(2), 263–292.
 
     - **Hall, R.E. (1978).** Stochastic Implications of the Life Cycle–Permanent
       Income Hypothesis. *Journal of Political Economy, 86*(6), 971–987.
@@ -286,6 +286,15 @@ st.markdown(
 
     - **Central Bank of Kenya. (2021).** *FinAccess Household Survey.*
       CBK / KNBS / FSD Kenya.
+
+    - **Modigliani, F. & Brumberg, R. (1954).** Utility Analysis and the Consumption
+      Function. In K. Kurihara (ed.), *Post-Keynesian Economics.* Rutgers University Press.
+
+    - **Suri, T. & Jack, W. (2016).** The long-run poverty and gender impacts of mobile money.
+      *Science, 354*(6317), 1288–1292.
+
+    - **Dupas, P. & Robinson, J. (2013).** Savings constraints and microenterprise development.
+      *American Economic Review, 103*(4), 1138–1171.
 
     - **World Bank. (2024).** *Global Economic Prospects.*
       World Bank Group, Washington D.C.
