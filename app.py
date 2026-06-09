@@ -478,16 +478,41 @@ def show_home_dashboard():
     else:
         _sav_rate = 0.0
 
+    # Try to get Financial Health Score and Present Bias for the ticker
+    try:
+        from core.health_score import calculate_health_score
+        _hs = calculate_health_score(user_id)
+        _health_str = (
+            f'<span style="color:#00C49F;font-weight:700;">{_hs["overall_score"]:.0f}/100</span>'
+            if _hs.get("has_sufficient_data") else
+            '<span style="color:#4A6070;font-weight:700;">—</span>'
+        )
+    except Exception:
+        _health_str = '<span style="color:#4A6070;font-weight:700;">—</span>'
+
+    try:
+        from core.present_bias import calculate_present_bias
+        _pb = calculate_present_bias(user_id, currency=currency)
+        _bias_idx = _pb.get("bias_index", 0)
+        _bias_col = "#FF8800" if _bias_idx > 1.1 else "#00C49F"
+        _bias_str = (
+            f'<span style="color:{_bias_col};font-weight:700;">{_bias_idx:.2f}</span>'
+            if _pb.get("has_data") else
+            '<span style="color:#4A6070;font-weight:700;">—</span>'
+        )
+    except Exception:
+        _bias_str = '<span style="color:#4A6070;font-weight:700;">—</span>'
+
     _dash_ticker_items = [
         f'🇰🇪 KENYA INFLATION <span style="color:#FF8800;font-weight:700;">'
         f'{_kenya_inf:.1f}%</span>',
         f'YOUR SAVINGS RATE <span style="color:#00C49F;font-weight:700;">'
         f'{_sav_rate:.1f}%</span>',
+        f'FINANCIAL HEALTH SCORE {_health_str}',
+        f'PRESENT BIAS INDEX {_bias_str}',
         'CBK POLICY RATE <span style="color:#FF8800;font-weight:700;">9.75%</span>',
         'KENYA GDP GROWTH <span style="color:#00C49F;font-weight:700;">+5.4%</span>',
         'NSE RETURN ASSUMPTION <span style="color:#4499FF;font-weight:700;">7.0% p.a.</span>',
-        'MOBILE MONEY PENETRATION <span style="color:#00C49F;font-weight:700;">75%</span>',
-        'FINANCIAL INCLUSION <span style="color:#00C49F;font-weight:700;">83.7%</span>',
         'SSA INFLATION AVG <span style="color:#FF8800;font-weight:700;">14.0%</span>',
     ]
     _sep_t = '<span style="color:rgba(0,196,159,0.2);padding:0 0.5rem;font-size:0.65rem;">◆</span>'
@@ -529,34 +554,93 @@ def show_home_dashboard():
 
     st.divider()
 
-    # ── SUMMARY METRICS ───────────────────────────────────────────────────────
-    # CSS hover effects are applied automatically from inject_global_styles()
-    # balance and monthly already fetched above for the ticker strip.
+    # ── SUMMARY METRICS — Animated Counters ──────────────────────────────────
+    # JS-animated counters count from 0 to final value on page load.
+    # Single components.html() block avoids iframe alignment issues.
 
     net = monthly["net"]
+    _savings_rate_pct = (net / monthly["total_income"] * 100) if monthly["total_income"] > 0 else 0.0
+    _net_colour   = "#00C49F" if net >= 0 else "#FF4444"
+    _net_delta    = f"{_savings_rate_pct:.1f}% savings rate" if monthly["total_income"] > 0 else "No income recorded"
+    _delta_colour = "#00C49F" if _savings_rate_pct >= 0 else "#FF4444"
 
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-        st.metric("💰 Current Balance",
-                  f"{currency} {balance:,.2f}")
-    with col2:
-        st.metric("📥 Income This Month",
-                  f"{currency} {monthly['total_income']:,.2f}")
-    with col3:
-        st.metric("📤 Expenses This Month",
-                  f"{currency} {monthly['total_expenses']:,.2f}")
-    with col4:
-        if monthly["total_income"] > 0:
-            rate_label = f"{(net / monthly['total_income'] * 100):.1f}% savings rate"
-        else:
-            rate_label = "No income recorded"
-        st.metric(
-            "📊 Net This Month",
-            f"{currency} {abs(net):,.2f}",
-            delta=rate_label,
-            delta_color="normal" if net >= 0 else "inverse",
-        )
+    _metrics_html = f"""
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+* {{ margin:0; padding:0; box-sizing:border-box; }}
+body {{ background:#0E1117; font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; padding:0; }}
+.grid {{ display:grid; grid-template-columns:repeat(4,1fr); gap:0.75rem; }}
+.card {{
+  background:linear-gradient(145deg,#1C2333 0%,#161D2A 100%);
+  border:1px solid #252D3D; border-radius:12px;
+  padding:1.1rem 1.3rem;
+  transition:transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}}
+.card:hover {{
+  transform:translateY(-3px);
+  border-color:rgba(0,196,159,0.45);
+  box-shadow:0 8px 30px rgba(0,196,159,0.1),0 2px 8px rgba(0,0,0,0.3);
+}}
+.lbl {{
+  font-size:0.7rem; font-weight:600; color:#8899AA;
+  text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.45rem;
+}}
+.val {{
+  font-size:1.45rem; font-weight:700; color:#FAFAFA;
+  letter-spacing:-0.02em; line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}}
+.delta {{ font-size:0.75rem; margin-top:0.35rem; font-weight:500; }}
+@media (max-width:550px) {{
+  .grid {{ grid-template-columns:repeat(2,1fr); }}
+  .val {{ font-size:1.2rem; }}
+}}
+</style></head><body>
+<div class="grid">
+  <div class="card">
+    <div class="lbl">💰 Current Balance</div>
+    <div class="val" id="v-bal" style="color:#E2E8F0;">{currency} 0.00</div>
+  </div>
+  <div class="card">
+    <div class="lbl">📥 Income This Month</div>
+    <div class="val" id="v-inc" style="color:#00C49F;">{currency} 0.00</div>
+  </div>
+  <div class="card">
+    <div class="lbl">📤 Expenses This Month</div>
+    <div class="val" id="v-exp" style="color:#FF8800;">{currency} 0.00</div>
+  </div>
+  <div class="card">
+    <div class="lbl">📊 Net This Month</div>
+    <div class="val" id="v-net" style="color:{_net_colour};">{currency} 0.00</div>
+    <div class="delta" style="color:{_delta_colour};">{_net_delta}</div>
+  </div>
+</div>
+<script>
+var CUR = "{currency} ";
+function fmt(n) {{
+  return CUR + n.toLocaleString('en-US',{{minimumFractionDigits:2,maximumFractionDigits:2}});
+}}
+function animate(id, target, delay) {{
+  setTimeout(function() {{
+    var el = document.getElementById(id);
+    var duration = 1400;
+    var start = performance.now();
+    function step(now) {{
+      var progress = Math.min((now - start)/duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = fmt(eased * target);
+      if (progress < 1) requestAnimationFrame(step);
+    }}
+    requestAnimationFrame(step);
+  }}, delay);
+}}
+animate('v-bal', {balance:.6f},  80);
+animate('v-inc', {monthly['total_income']:.6f}, 200);
+animate('v-exp', {monthly['total_expenses']:.6f}, 320);
+animate('v-net', {abs(net):.6f},  440);
+</script></body></html>
+"""
+    components.html(_metrics_html, height=118)
 
     st.divider()
 

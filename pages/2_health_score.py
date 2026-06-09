@@ -133,7 +133,34 @@ st.divider()
 
 # ── FOUR SUB-SCORE CARDS ──────────────────────────────────────────────────────
 
-st.markdown("### Score Breakdown")
+# FT-style declarative headline based on overall score
+if overall >= 70:
+    _hs_headline = (
+        f"Strong financial health at {overall:.0f}/100 — "
+        f"savings rate, resilience, consistency, and investment commitment all within healthy ranges."
+    )
+elif overall >= 50:
+    _hs_headline = (
+        f"Developing financial health at {overall:.0f}/100 — "
+        f"at least one dimension is below the recommended threshold and warrants attention."
+    )
+elif overall >= 30:
+    _hs_headline = (
+        f"Financial health score of {overall:.0f}/100 signals caution — "
+        f"multiple dimensions are materially below their economic benchmarks."
+    )
+else:
+    _hs_headline = (
+        f"Financial health score of {overall:.0f}/100 requires immediate attention — "
+        f"core dimensions are significantly below minimum targets."
+    )
+
+st.markdown(
+    f'<div style="font-size:1.05rem; font-weight:700; color:#E2E8F0; '
+    f'letter-spacing:-0.015em; line-height:1.35; margin-bottom:0.3rem;">'
+    f'{_hs_headline}</div>',
+    unsafe_allow_html=True,
+)
 st.caption(
     "Each dimension corresponds to a named concept in personal finance "
     "and macroeconomic theory."
@@ -238,11 +265,25 @@ st.divider()
 history = get_health_snapshot_history(user_id, limit=30)
 
 if len(history) >= 2:
-    st.markdown("### Score Trend")
-    st.caption("Your Financial Health Score over time. Updates each time you visit this page.")
-
-    dates  = [h["snapshot_date"] for h in history]
+    dates            = [h["snapshot_date"] for h in history]
     scores_over_time = [h["overall_score"] for h in history]
+
+    # FT-style declarative trend headline
+    _score_delta = scores_over_time[-1] - scores_over_time[0]
+    if _score_delta > 3:
+        _trend_headline = f"Financial health has improved by {_score_delta:.0f} points — positive momentum sustained over the recorded period."
+    elif _score_delta < -3:
+        _trend_headline = f"Financial health has declined by {abs(_score_delta):.0f} points — a trend worth examining in the module breakdowns."
+    else:
+        _trend_headline = "Financial health score has been broadly stable — consistent behaviour across the recorded period."
+
+    st.markdown(
+        f'<div style="font-size:1.0rem; font-weight:700; color:#E2E8F0; '
+        f'letter-spacing:-0.015em; line-height:1.35; margin-bottom:0.2rem;">'
+        f'{_trend_headline}</div>',
+        unsafe_allow_html=True,
+    )
+    st.caption("Your Financial Health Score over time. Updates each time you visit this page.")
 
     fig_trend = go.Figure()
 

@@ -117,7 +117,35 @@ st.divider()
 
 # ── WEEKLY SPENDING BAR CHART ─────────────────────────────────────────────────
 
-st.markdown("### Average Discretionary Spending by Week")
+# FT-style declarative headline
+if idx >= 1.25:
+    w1_excess_pct = (idx - 1) * 100
+    _beh_headline = (
+        f"Discretionary spending is {w1_excess_pct:.0f}% higher in the first week of the month "
+        f"than in the final week — a textbook signature of present bias."
+    )
+elif idx >= 1.05:
+    _beh_headline = (
+        f"Mild spending concentration detected early in the month "
+        f"(Present Bias Index: {idx:.2f}) — consistent with mild hyperbolic discounting."
+    )
+elif idx <= 0.95:
+    _beh_headline = (
+        f"Spending is concentrated toward month-end (Present Bias Index: {idx:.2f}) "
+        f"— this is the reverse of typical present bias."
+    )
+else:
+    _beh_headline = (
+        f"Spending is distributed evenly throughout the month "
+        f"(Present Bias Index: {idx:.2f}) — consistent with rational consumption smoothing."
+    )
+
+st.markdown(
+    f'<div style="font-size:1.1rem; font-weight:700; color:#E2E8F0; '
+    f'letter-spacing:-0.015em; line-height:1.35; margin-bottom:0.3rem;">'
+    f'{_beh_headline}</div>',
+    unsafe_allow_html=True,
+)
 st.caption(
     "Discretionary categories: food, transport, entertainment, other expenses. "
     "Fixed obligations (rent, utilities, education, health) are excluded — "

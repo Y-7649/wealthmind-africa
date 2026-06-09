@@ -10,6 +10,7 @@ The current_page parameter controls which nav item is shown as active
 (highlighted with the teal accent).  Valid identifiers:
 
     "kenya_context" Kenya Economic Context (public)
+    "findings"      Findings — research briefing (public)
     "home"          Home / overview dashboard
     "dashboard"     Transaction ledger
     "health_score"  Financial Health Score
@@ -113,6 +114,11 @@ def render_sidebar(current_page: str = ""):
             st.markdown(_active_item("🌍  Kenya Economic Context"), unsafe_allow_html=True)
         else:
             st.page_link("pages/0_kenya_context.py", label="🌍  Kenya Economic Context")
+
+        if current_page == "findings":
+            st.markdown(_active_item("📋  Findings"), unsafe_allow_html=True)
+        else:
+            st.page_link("pages/7_findings.py", label="📋  Findings")
 
         # ── PLATFORM ─────────────────────────────────────────────────────────
 

@@ -120,7 +120,34 @@ st.divider()
 
 # ── NOMINAL VS REAL CHART ─────────────────────────────────────────────────────
 
-st.markdown("### Nominal vs Real Spending Over Time")
+# FT-style declarative headline — communicates the finding before the chart
+if nom > 0 and real >= 0 and nom > real:
+    _inf_effect_pp = (nom - real) * 100
+    _share = _inf_effect_pp / (nom * 100) * 100 if nom > 0 else 0
+    _chart_headline = (
+        f"Spending rose {nom * 100:.1f}% in nominal terms "
+        f"— but only {real * 100:.1f}% in real terms. "
+        f"Inflation accounts for {_inf_effect_pp:.1f} percentage points of the apparent increase."
+    )
+elif nom > 0 and real < 0:
+    _chart_headline = (
+        f"Spending rose {nom * 100:.1f}% on paper — "
+        f"but fell {abs(real) * 100:.1f}% in real terms once inflation is removed."
+    )
+elif nom < 0:
+    _chart_headline = (
+        f"Spending fell in both nominal ({nom * 100:.1f}%) and real ({real * 100:.1f}%) terms — "
+        f"genuine consumption reduction."
+    )
+else:
+    _chart_headline = "Your spending changes in nominal and real terms — the gap between the lines is the inflation effect."
+
+st.markdown(
+    f'<div style="font-size:1.1rem; font-weight:700; color:#E2E8F0; '
+    f'letter-spacing:-0.015em; line-height:1.35; margin-bottom:0.3rem;">'
+    f'{_chart_headline}</div>',
+    unsafe_allow_html=True,
+)
 st.caption(
     "Two lines showing the same spending data — once as recorded (nominal), "
     "once deflated by Kenya's CPI (real). The gap between the lines is "
@@ -184,7 +211,13 @@ st.divider()
 
 # ── CATEGORY BREAKDOWN ────────────────────────────────────────────────────────
 
-st.markdown("### Category Analysis")
+st.markdown(
+    '<div style="font-size:1.05rem; font-weight:700; color:#E2E8F0; '
+    'letter-spacing:-0.015em; margin-bottom:0.2rem;">'
+    'Which spending categories are driven by inflation — and which reflect real changes?'
+    '</div>',
+    unsafe_allow_html=True,
+)
 st.caption(
     f"Comparing **{data['previous_month_label']}** to **{data['current_month_label']}**, "
     f"adjusted for Kenya's category-specific inflation rates."

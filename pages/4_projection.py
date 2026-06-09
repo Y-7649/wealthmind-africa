@@ -189,7 +189,33 @@ st.divider()
 
 # ── FOUR-SCENARIO CHART ───────────────────────────────────────────────────────
 
-st.markdown("### 25-Year Wealth Projection (Four Scenarios)")
+# FT-style declarative headline — computed after gap values are available
+# gap values are calculated below the chart, so we compute them early here
+_t25_current  = data["at_25_years"]["current"]
+_t25_improved = data["at_25_years"]["improved"]
+_t25_active   = data["at_25_years"]["active"]
+_gap_sav      = _t25_improved - _t25_current
+_gap_act      = _t25_active   - _t25_current
+
+if _gap_sav > 0:
+    _proj_headline = (
+        f"Saving just 5% more each month could add "
+        f"{currency} {_gap_sav:,.0f} to your net worth by year 25 — "
+        f"compound growth amplifies small behavioural changes."
+    )
+else:
+    _proj_headline = (
+        "The gap between saving more and staying the course widens dramatically "
+        "over 25 years — a visual demonstration of compound growth."
+    )
+
+st.markdown(
+    f'<div style="font-size:1.1rem; font-weight:700; color:#E2E8F0; '
+    f'letter-spacing:-0.015em; line-height:1.35; margin-bottom:0.35rem;">'
+    f'{_proj_headline}</div>',
+    unsafe_allow_html=True,
+)
+st.caption("Four scenarios. Each isolates one economic variable to show its independent wealth effect.")
 
 years         = data["years"]
 current_path  = data["current_path"]
@@ -394,14 +420,28 @@ st.divider()
 
 # ── FINANCIAL RESILIENCE ──────────────────────────────────────────────────────
 
-st.markdown("### Financial Resilience")
+r_months  = data["resilience_months"]
+avg_exp   = data["avg_monthly_expenses"]
+
+if r_months >= 6:
+    _res_headline = f"Strong buffer: your balance covers {r_months:.1f} months of expenses — above the CBK-recommended minimum."
+elif r_months >= 3:
+    _res_headline = f"Your balance covers {r_months:.1f} months of expenses — within the recommended 3–6 month range."
+elif r_months >= 1:
+    _res_headline = f"Financial vulnerability: only {r_months:.1f} months of expenses covered — below the 3-month minimum."
+else:
+    _res_headline = "Critical runway: less than one month of expenses covered — income disruption risk is high."
+
+st.markdown(
+    f'<div style="font-size:1.05rem; font-weight:700; color:#E2E8F0; '
+    f'letter-spacing:-0.015em; line-height:1.35; margin-bottom:0.2rem;">'
+    f'{_res_headline}</div>',
+    unsafe_allow_html=True,
+)
 st.caption(
     "How long could you maintain your current lifestyle if your income stopped today? "
     "Grounded in Deaton (1991) buffer stock saving theory."
 )
-
-r_months = data["resilience_months"]
-avg_exp   = data["avg_monthly_expenses"]
 
 if r_months >= 6:
     r_colour = "#00C49F"

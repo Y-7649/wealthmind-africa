@@ -77,14 +77,12 @@ with profile_right:
                 </a>
             </div>
             <div style='margin-bottom:0.6rem;'>
-                🐙 GitHub
-                <em style='color:#777777; font-size:0.85rem;'>
+                🐙
                 <a href="https://github.com/Y-7649/wealthmind-africa"
                    target="_blank"
-                   style="color:#00C49F; text-decoration:none;">
+                   style="color:#00C49F; text-decoration:none; font-size:0.85rem;">
                     github.com/Y-7649/wealthmind-africa
                 </a>
-                </em>
             </div>
             <hr style='border-color:#2A2A3A; margin:1rem 0;'>
             <div style='color:#AAAAAA; font-size:0.85rem; line-height:1.6;'>
@@ -299,6 +297,124 @@ st.markdown(
     - **World Bank. (2024).** *Global Economic Prospects.*
       World Bank Group, Washington D.C.
     """
+)
+
+st.divider()
+
+# ── WHAT I LEARNED ────────────────────────────────────────────────────────────
+
+st.markdown("## What I Learned Building WealthMind Africa")
+
+st.markdown(
+    """
+    <p style='color:#8899AA; font-size:0.95rem; line-height:1.7; max-width:720px;
+              font-style:italic; margin-bottom:1.5rem;'>
+    This section is deliberately personal. It is not about what the platform does —
+    it is about what building it made me think about. — Yash Karia
+    </p>
+    """,
+    unsafe_allow_html=True,
+)
+
+_REFLECTIONS = [
+    {
+        "icon": "📊",
+        "topic": "Inflation is an invisible tax that most people never notice",
+        "body": (
+            "Before I built the inflation module, I thought of inflation as a macroeconomic "
+            "statistic — something governments track and central banks respond to. Building "
+            "the Fisher equation into personal spending data changed how I think about it. "
+            "When food inflation in Kenya hit 12% in 2023, a household that spent 10% more "
+            "on food actually consumed less than before. The nominal number told one story; "
+            "the real number told the opposite. That gap — between what people see on their "
+            "bank statement and what actually happened to their purchasing power — is, I think, "
+            "one of the most important things economics teaches that everyday financial "
+            "thinking consistently misses."
+        ),
+    },
+    {
+        "icon": "🧠",
+        "topic": "Behavioural economics is less about irrational people and more about predictable patterns",
+        "body": (
+            "Laibson's hyperbolic discounting model sounds abstract until you see it in "
+            "real spending data. The week-1 versus week-4 spending ratio was the most "
+            "surprising finding in the platform. People are not randomly irrational — "
+            "they are predictably biased toward immediate consumption right after income "
+            "arrives. What surprised me more was the policy implication: M-Shwari and "
+            "M-Akiba are not just financial products, they are commitment devices "
+            "designed around this exact bias. The most effective financial inclusion "
+            "tools do not fight human nature — they work with it."
+        ),
+    },
+    {
+        "icon": "🛡️",
+        "topic": "Financial resilience is about the ratio of assets to obligations, not the size of either",
+        "body": (
+            "Deaton's buffer stock theory seemed straightforward at first: hold liquid savings "
+            "to smooth income shocks. But implementing it quantitatively showed me something "
+            "more interesting. A household with KES 200,000 in savings and KES 80,000/month "
+            "in expenses has exactly 2.5 months of runway. A household with KES 90,000 in "
+            "savings and KES 25,000/month in expenses has 3.6 months — significantly stronger "
+            "resilience despite smaller absolute savings. The insight is that resilience is a "
+            "ratio, not an absolute. Managing your expense rate is as powerful as growing "
+            "your savings — and far more within your immediate control."
+        ),
+    },
+    {
+        "icon": "📱",
+        "topic": "Kenya's mobile money ecosystem is not a fintech story — it is a development economics story",
+        "body": (
+            "I came into this project expecting to find that M-Pesa was impressive because "
+            "of the technology. Reading Suri & Jack (2016) changed that framing entirely. "
+            "The reason M-Pesa matters is not the app — it is the consumption smoothing it "
+            "enables. Households that gained mobile money access could receive remittances "
+            "from urban family members immediately after an income shock: a drought, an "
+            "illness, a job loss. That speed transformed an uninsured risk into a manageable "
+            "disruption. The 2% of Kenyan households lifted out of poverty were not lifted "
+            "by technology. They were lifted by risk-sharing — the oldest mechanism in "
+            "development economics, made faster."
+        ),
+    },
+    {
+        "icon": "🌍",
+        "topic": "Financial inclusion is a spectrum, and most of the interesting economics is in the middle",
+        "body": (
+            "The 83.7% financial inclusion figure for Kenya looks impressive until you "
+            "notice that formal bank inclusion is 56.8%. That 27-percentage-point gap "
+            "represents millions of people who have mobile wallets but no access to "
+            "credit, insurance, or investment products. Building the platform made me "
+            "think carefully about what 'included' actually means. A mobile wallet enables "
+            "consumption smoothing but not capital accumulation. A farmer can receive "
+            "M-Pesa payments but still cannot access long-term credit to invest in "
+            "irrigation. The economics of that middle band — included but constrained — "
+            "strikes me as some of the most important and under-examined territory in "
+            "development finance."
+        ),
+    },
+]
+
+_LEARN_HTML = ""
+for i, item in enumerate(_REFLECTIONS):
+    _border = "border-top:1px solid #1A2030; padding-top:1.5rem; margin-top:1.5rem;" if i > 0 else ""
+    _LEARN_HTML += (
+        f'<div style="{_border}">'
+        f'<div style="display:flex; gap:0.9rem; align-items:flex-start;">'
+        f'<div style="font-size:1.4rem; flex-shrink:0; margin-top:0.15rem;">{item["icon"]}</div>'
+        f'<div>'
+        f'<div style="font-size:1.0rem; font-weight:700; color:#E2E8F0; '
+        f'letter-spacing:-0.015em; margin-bottom:0.55rem; line-height:1.3;">{item["topic"]}</div>'
+        f'<div style="font-size:0.88rem; color:#8899AA; line-height:1.7;">{item["body"]}</div>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+    )
+
+st.markdown(
+    f'<div style="background:linear-gradient(145deg,#141B28,#111620); '
+    f'border:1px solid #1E2738; border-radius:14px; padding:2rem 2.2rem;">'
+    + _LEARN_HTML +
+    f'</div>',
+    unsafe_allow_html=True,
 )
 
 render_footer()
