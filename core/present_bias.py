@@ -127,10 +127,14 @@ def calculate_present_bias(user_id: int, currency: str = "KES") -> dict:
         avg_week[week] = sum(m[week] for m in monthly_data) / months_analysed
 
     # ── PRESENT BIAS INDEX ────────────────────────────────────────────────────
+    # Capped at 3.0: once week-1 spending is 3× week-4 the bias is already
+    # "strong" (the classification tops out at 1.6), and an uncapped ratio
+    # explodes to meaningless magnitudes when week-4 spending is near zero.
+    _BIAS_CAP = 3.0
     if avg_week["week_4"] > 0:
-        bias_index = avg_week["week_1"] / avg_week["week_4"]
+        bias_index = min(avg_week["week_1"] / avg_week["week_4"], _BIAS_CAP)
     elif avg_week["week_1"] > 0:
-        bias_index = 3.0   # Week 4 is zero — strong bias, cap for display
+        bias_index = _BIAS_CAP   # Week 4 is zero — strong bias, capped for display
     else:
         bias_index = 1.0   # No data in either week
 

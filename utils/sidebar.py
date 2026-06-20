@@ -120,6 +120,11 @@ def render_sidebar(current_page: str = ""):
         else:
             st.page_link("pages/7_findings.py", label="📋  Findings")
 
+        if current_page == "impact":
+            st.markdown(_active_item("📊  School Impact Report"), unsafe_allow_html=True)
+        else:
+            st.page_link("pages/9_impact.py", label="📊  School Impact Report")
+
         # ── PLATFORM ─────────────────────────────────────────────────────────
 
         st.markdown(_section_label("Platform"), unsafe_allow_html=True)
@@ -166,6 +171,16 @@ def render_sidebar(current_page: str = ""):
             st.markdown(_active_item("👨‍💻  About the Creator"), unsafe_allow_html=True)
         else:
             st.page_link("pages/6_about.py", label="👨‍💻  About the Creator")
+
+        # ── ADMIN (only visible to admin accounts) ────────────────────────────
+        # Rendered conditionally so the dashboard is hidden from normal users.
+        _user = st.session_state.get("user") or {}
+        if _user.get("is_admin"):
+            st.markdown(_section_label("Admin"), unsafe_allow_html=True)
+            if current_page == "admin":
+                st.markdown(_active_item("🔐  Admin Analytics"), unsafe_allow_html=True)
+            else:
+                st.page_link("pages/8_admin.py", label="🔐  Admin Analytics")
 
         # ── LOGGED-IN USER & SIGN OUT ─────────────────────────────────────────
 

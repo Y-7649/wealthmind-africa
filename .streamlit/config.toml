@@ -22,3 +22,11 @@ headless = true
 [browser]
 # Suppresses the usage statistics prompt on first run
 gatherUsageStats = false
+
+[client]
+# Hide Streamlit's automatic multipage navigation. WealthMind Africa ships a
+# bespoke sidebar (utils/sidebar.py) that controls exactly which pages each
+# user sees — this keeps the Admin Analytics Dashboard hidden from normal
+# users and the public pages clean. All navigation flows through render_sidebar
+# and the inline links on the public pages.
+showSidebarNavigation = false

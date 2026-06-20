@@ -18,7 +18,7 @@ import os
 import sqlite3
 import bcrypt
 from pathlib import Path
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 # ── 1. CONNECTION ─────────────────────────────────────────────────────────────
 
@@ -66,7 +66,8 @@ def get_connection():
 
 def initialise_database():
     """
-    Create all tables if they do not already exist.
+    Create all tables if they do not already exist, then run lightweight
+    migrations that evolve the schema for databases created by older versions.
 
     Reads the SQL from schema.sql and executes it. Running this on
     every application start is safe — all CREATE statements use
@@ -81,10 +82,42 @@ def initialise_database():
     # executescript runs multiple SQL statements separated by semicolons
     conn.executescript(schema)
     conn.commit()
+
+    # Migrations for pre-existing databases. CREATE TABLE IF NOT EXISTS will
+    # not add columns to a table that already exists, so we add them here.
+    _run_migrations(conn)
+    conn.commit()
     conn.close()
 
 
+def _run_migrations(conn) -> None:
+    """
+    Apply additive, idempotent schema migrations.
+
+    SQLite's ALTER TABLE ADD COLUMN errors if the column already exists,
+    so we first inspect the live schema with PRAGMA table_info and only
+    add columns that are missing. This keeps every deployment — old or new —
+    on the same schema without ever touching existing data.
+    """
+    existing = {row["name"] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+
+    if "is_admin" not in existing:
+        conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+
+    if "last_login" not in existing:
+        conn.execute("ALTER TABLE users ADD COLUMN last_login TEXT")
+
+
 # ── 3. USER OPERATIONS ────────────────────────────────────────────────────────
+
+# Usernames in this set are automatically granted admin rights on
+# registration and login. Admin accounts can access the Admin Analytics
+# Dashboard. To make your own account an admin, either:
+#   (a) register/use one of these usernames, or
+#   (b) add your username to this set, or
+#   (c) call promote_to_admin("your_username") once.
+# Lower-cased comparison, so "Admin" and "admin" are equivalent.
+ADMIN_USERNAMES = {"admin", "yashkaria", "ykaria"}
 
 # Controlled vocabulary for valid transaction categories.
 # Defined here so both db.py and the Streamlit UI use exactly the same list.
@@ -131,11 +164,14 @@ def register_user(username: str, password: str, currency: str = "KES") -> tuple[
     # Store the hash as a string (decode from bytes back to str for SQLite)
     password_hash_str = password_hash.decode("utf-8")
 
+    # Designated admin usernames are flagged at creation time.
+    is_admin = 1 if username.lower() in ADMIN_USERNAMES else 0
+
     conn = get_connection()
     try:
         conn.execute(
-            "INSERT INTO users (username, password_hash, currency) VALUES (?, ?, ?)",
-            (username, password_hash_str, currency),
+            "INSERT INTO users (username, password_hash, currency, is_admin) VALUES (?, ?, ?, ?)",
+            (username, password_hash_str, currency, is_admin),
         )
         conn.commit()
         return True, "Account created successfully."
@@ -184,11 +220,43 @@ def login_user(username: str, password: str) -> tuple[bool, dict | None]:
         )
 
         if password_matches:
-            # Convert the Row object to a plain dictionary for easy use
-            return True, dict(row)
+            # Record activity (for active-user analytics) and ensure designated
+            # admin usernames are flagged even if the account predates ADMIN_USERNAMES.
+            now_str    = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            make_admin = 1 if username.lower() in ADMIN_USERNAMES else row["is_admin"]
+            conn.execute(
+                "UPDATE users SET last_login = ?, is_admin = ? WHERE id = ?",
+                (now_str, make_admin, row["id"]),
+            )
+            conn.commit()
+
+            user = dict(row)
+            user["last_login"] = now_str
+            user["is_admin"]   = make_admin
+            return True, user
         else:
             return False, None
 
+    finally:
+        conn.close()
+
+
+def promote_to_admin(username: str) -> tuple[bool, str]:
+    """
+    Grant admin rights to an existing user by username.
+
+    Provided as a convenience for designating an admin account without
+    editing ADMIN_USERNAMES. Returns (success, message).
+    """
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            "UPDATE users SET is_admin = 1 WHERE username = ?", (username,)
+        )
+        conn.commit()
+        if cur.rowcount == 0:
+            return False, f"No user named '{username}' found."
+        return True, f"'{username}' is now an admin."
     finally:
         conn.close()
 
@@ -569,5 +637,174 @@ def get_health_snapshot_history(user_id: int, limit: int = 30) -> list[dict]:
 
         return [dict(row) for row in rows]
 
+    finally:
+        conn.close()
+
+
+# ── 6. AGGREGATE / ANALYTICS OPERATIONS (anonymised) ──────────────────────────
+# Every function in this section returns COHORT-LEVEL aggregates only.
+# No usernames, passwords, or individual rows are ever returned — this is
+# what allows the Admin Dashboard and School Impact Report to present real
+# adoption and behavioural findings without exposing any individual's data.
+
+
+def get_all_user_ids() -> list[int]:
+    """Return every user id. Used to compute per-user economic scores in bulk."""
+    conn = get_connection()
+    try:
+        rows = conn.execute("SELECT id FROM users ORDER BY id").fetchall()
+        return [row["id"] for row in rows]
+    finally:
+        conn.close()
+
+
+def count_users() -> int:
+    """Total number of registered users."""
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT COUNT(*) AS n FROM users").fetchone()["n"]
+    finally:
+        conn.close()
+
+
+def count_active_users(days: int) -> int:
+    """
+    Number of distinct users active within the last `days`.
+
+    A user is counted as active if they either logged in OR recorded a
+    transaction inside the window. Combining both signals makes the metric
+    robust even for accounts created before login tracking existed.
+    """
+    cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            """
+            SELECT COUNT(DISTINCT uid) AS n FROM (
+                SELECT id        AS uid FROM users
+                    WHERE last_login IS NOT NULL AND last_login >= ?
+                UNION
+                SELECT user_id   AS uid FROM transactions
+                    WHERE created_at >= ?
+            )
+            """,
+            (cutoff, cutoff),
+        ).fetchone()
+        return row["n"]
+    finally:
+        conn.close()
+
+
+def count_transactions() -> int:
+    """Total number of transactions recorded across all users."""
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT COUNT(*) AS n FROM transactions").fetchone()["n"]
+    finally:
+        conn.close()
+
+
+def get_transaction_value_summary() -> dict:
+    """
+    Total monetary value analysed, split by type.
+
+    Returns {"income": float, "expense": float, "total": float}.
+    Note: values may mix currencies; the analytics layer reports the
+    dominant currency alongside this figure for honest interpretation.
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT type, COALESCE(SUM(amount),0) AS total FROM transactions GROUP BY type"
+        ).fetchall()
+        by_type = {row["type"]: row["total"] for row in rows}
+        income  = by_type.get("income", 0.0)
+        expense = by_type.get("expense", 0.0)
+        return {"income": income, "expense": expense, "total": income + expense}
+    finally:
+        conn.close()
+
+
+def get_category_totals() -> list[dict]:
+    """
+    Expense totals grouped by category across all users.
+    Returns [{"category", "total", "count"}], largest first.
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT   category,
+                     COALESCE(SUM(amount),0) AS total,
+                     COUNT(*)                AS count
+            FROM     transactions
+            WHERE    type = 'expense'
+            GROUP BY category
+            ORDER BY total DESC
+            """
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+def get_currency_distribution() -> list[dict]:
+    """User counts grouped by preferred currency. Returns [{"currency","count"}]."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT currency, COUNT(*) AS count FROM users GROUP BY currency ORDER BY count DESC"
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+def get_monthly_user_growth() -> list[dict]:
+    """
+    New registrations per calendar month, with a running cumulative total.
+    Returns [{"month": "YYYY-MM", "new_users": int, "cumulative": int}].
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT   substr(created_at, 1, 7) AS month, COUNT(*) AS new_users
+            FROM     users
+            GROUP BY month
+            ORDER BY month
+            """
+        ).fetchall()
+        result, running = [], 0
+        for row in rows:
+            running += row["new_users"]
+            result.append({
+                "month": row["month"],
+                "new_users": row["new_users"],
+                "cumulative": running,
+            })
+        return result
+    finally:
+        conn.close()
+
+
+def get_monthly_transaction_growth() -> list[dict]:
+    """
+    Transaction count and value per calendar month (by record creation date).
+    Returns [{"month": "YYYY-MM", "count": int, "value": float}].
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT   substr(created_at, 1, 7)  AS month,
+                     COUNT(*)                  AS count,
+                     COALESCE(SUM(amount), 0)  AS value
+            FROM     transactions
+            GROUP BY month
+            ORDER BY month
+            """
+        ).fetchall()
+        return [dict(row) for row in rows]
     finally:
         conn.close()

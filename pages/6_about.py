@@ -47,17 +47,42 @@ with profile_left:
         """
         ## Yash Karia
 
-        I am a student with a strong interest in **Finance, Economics, Fintech,
-        and Behavioural Finance**. My academic interests sit at the intersection
-        of quantitative analysis, economic theory, and the application of
-        technology to financial decision-making.
+        Student researcher with interests in **behavioural economics, financial
+        inclusion, development economics, and economic decision-making**. My work
+        sits at the intersection of economic theory and the empirical study of how
+        people actually make financial decisions — particularly in emerging-market
+        contexts where the gap between textbook models and lived behaviour is widest.
 
-        WealthMind Africa is a personal project built to demonstrate that
-        software can be a vehicle for genuine economic analysis — not just a
-        tool for tracking transactions, but a platform for understanding *why*
-        financial behaviour deviates from what economic theory would predict,
-        and what the real-world consequences of those deviations are.
+        WealthMind Africa is my applied economics project: an attempt to take four
+        ideas from the economics literature — real versus nominal value, composite
+        indexing, intertemporal choice, and hyperbolic discounting — and test whether
+        they are observable in real financial data rather than only in theory.
+
+        I am less interested in building software for its own sake than in using it
+        as an instrument: a way to turn a stream of ordinary transactions into a
+        small empirical study of saving, spending, and the behavioural biases that
+        shape both.
         """
+    )
+
+    st.markdown(
+        """
+        <div style='background:#1C2333; padding:1.2rem 1.4rem; border-radius:10px;
+                    border-left:3px solid #00C49F; margin-top:1rem;'>
+            <div style='font-size:0.7rem; font-weight:700; color:#00C49F;
+                        text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.7rem;'>
+                Background
+            </div>
+            <div style='color:#AAB7C4; font-size:0.88rem; line-height:1.85;'>
+                • International research experience<br>
+                • University-level economics coursework<br>
+                • Harvard-certified coursework<br>
+                • Independent economics research<br>
+                • WealthMind Africa — applied economics project
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
 with profile_right:
@@ -86,10 +111,10 @@ with profile_right:
             </div>
             <hr style='border-color:#2A2A3A; margin:1rem 0;'>
             <div style='color:#AAAAAA; font-size:0.85rem; line-height:1.6;'>
-                <strong style='color:#CCCCCC;'>Interests</strong><br>
-                Finance · Economics · Fintech<br>
-                Behavioural Finance · Quantitative Analysis<br>
-                Financial Technology · East African Markets
+                <strong style='color:#CCCCCC;'>Research Interests</strong><br>
+                Behavioural Economics · Financial Inclusion<br>
+                Development Economics<br>
+                Economic Decision-Making · East African Markets
             </div>
         </div>
         """,

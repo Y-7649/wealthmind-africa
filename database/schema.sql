@@ -12,7 +12,12 @@ CREATE TABLE IF NOT EXISTS users (
     username      TEXT    NOT NULL UNIQUE,
     password_hash TEXT    NOT NULL,
     currency      TEXT    NOT NULL DEFAULT 'KES',
-    created_at    TEXT    NOT NULL DEFAULT (DATE('now'))
+    created_at    TEXT    NOT NULL DEFAULT (DATE('now')),
+    -- is_admin gates the Admin Analytics Dashboard. 0 = normal user, 1 = admin.
+    is_admin      INTEGER NOT NULL DEFAULT 0,
+    -- last_login records the most recent successful login (DATETIME).
+    -- Used to compute active-user counts for the impact analytics.
+    last_login    TEXT
 );
 
 -- ============================================================

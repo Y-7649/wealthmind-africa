@@ -180,8 +180,17 @@ def show_landing_page():
             """,
             unsafe_allow_html=True,
         )
-        st.page_link("pages/0_kenya_context.py",
-                     label="🌍  Kenya Economic Context — public dashboard")
+        _pub_a, _pub_b = st.columns(2)
+        with _pub_a:
+            st.page_link("pages/0_kenya_context.py",
+                         label="🌍  Kenya Economic Context")
+            st.page_link("pages/7_findings.py",
+                         label="📋  Economic Findings")
+        with _pub_b:
+            st.page_link("pages/9_impact.py",
+                         label="📊  School Impact Report")
+            st.page_link("pages/6_about.py",
+                         label="👨‍💻  About the Researcher")
 
         # Four module cards — 2 × 2 grid
         # NOTE: Every opening HTML tag must close on the same line —
