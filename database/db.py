@@ -36,6 +36,134 @@ DB_PATH = Path(os.getenv("DB_PATH", str(_DEFAULT_DB_PATH)))
 SCHEMA_PATH = _THIS_DIR / "schema.sql"
 
 
+# ── TURSO (libSQL) SUPPORT ────────────────────────────────────────────────────
+# Streamlit Community Cloud has an ephemeral filesystem, so a local SQLite file
+# is wiped on every restart. When TURSO_DATABASE_URL and TURSO_AUTH_TOKEN are
+# provided (via environment variables or Streamlit secrets), every connection is
+# routed to a hosted Turso database instead, which persists permanently.
+#
+# Turso speaks SQLite, so NONE of the SQL in this file changes. The only shim
+# needed is to preserve the dict-style row access (row["col"], dict(row)) the
+# rest of the codebase relies on — the libSQL client returns plain tuples, so a
+# thin adapter re-wraps rows as dicts. Nothing outside get_connection() changes.
+
+
+def _turso_credentials():
+    """
+    Return (url, token) for Turso if configured, else (None, None).
+
+    Checks environment variables first, then Streamlit secrets — the secrets
+    lookup is wrapped so it never raises outside a Streamlit runtime (e.g. in
+    unit tests or CLI usage).
+    """
+    url   = os.getenv("TURSO_DATABASE_URL")
+    token = os.getenv("TURSO_AUTH_TOKEN")
+    if not (url and token):
+        try:
+            import streamlit as st
+            url   = url   or st.secrets.get("TURSO_DATABASE_URL")
+            token = token or st.secrets.get("TURSO_AUTH_TOKEN")
+        except Exception:
+            pass
+    return url, token
+
+
+def _split_sql_script(script: str) -> list:
+    """
+    Split a multi-statement SQL script into individual statements, dropping SQL
+    line comments and blank statements. Lets the libSQL adapter run schema.sql
+    without relying on a native executescript().
+    """
+    statements = []
+    for chunk in script.split(";"):
+        lines = [ln for ln in chunk.splitlines() if not ln.strip().startswith("--")]
+        stmt = "\n".join(lines).strip()
+        if stmt:
+            statements.append(stmt)
+    return statements
+
+
+class _DictCursor:
+    """
+    Wraps a libSQL cursor so fetched rows come back as plain dicts — preserving
+    the row["col"] and dict(row) access used throughout this file.
+    """
+
+    def __init__(self, cursor):
+        self._c = cursor
+
+    def _columns(self):
+        return [d[0] for d in self._c.description] if self._c.description else []
+
+    def fetchone(self):
+        row = self._c.fetchone()
+        if row is None:
+            return None
+        cols = self._columns()
+        return {col: row[i] for i, col in enumerate(cols)}
+
+    def fetchall(self):
+        cols = self._columns()
+        return [{col: row[i] for i, col in enumerate(cols)} for row in self._c.fetchall()]
+
+    def __iter__(self):
+        return iter(self.fetchall())
+
+    @property
+    def lastrowid(self):
+        return self._c.lastrowid
+
+    @property
+    def rowcount(self):
+        return self._c.rowcount
+
+
+class _TursoConnection:
+    """
+    Minimal sqlite3-style connection backed by Turso/libSQL. Implements only the
+    surface this codebase uses: execute, executescript, commit, close — returning
+    dict rows so no other function in this file needs to change.
+    """
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def execute(self, sql, params=()):
+        cur = self._conn.cursor()
+        cur.execute(sql, tuple(params))
+        return _DictCursor(cur)
+
+    def executescript(self, script):
+        cur = self._conn.cursor()
+        for stmt in _split_sql_script(script):
+            cur.execute(stmt)
+        return _DictCursor(cur)
+
+    def commit(self):
+        self._conn.commit()
+
+    def close(self):
+        try:
+            self._conn.close()
+        except Exception:
+            pass
+
+
+def _connect_turso(url: str, token: str) -> "_TursoConnection":
+    """Open a connection to the hosted Turso database (fails loudly if the
+    driver is missing, so data is never silently written to ephemeral storage)."""
+    try:
+        import libsql_experimental as libsql
+    except ImportError as e:
+        raise RuntimeError(
+            "TURSO_DATABASE_URL / TURSO_AUTH_TOKEN are set but the "
+            "'libsql-experimental' package is not installed. Add it to "
+            "requirements.txt and redeploy."
+        ) from e
+    raw = libsql.connect(database=url, auth_token=token)
+    return _TursoConnection(raw)
+
+
 def get_connection():
     """
     Open and return a connection to the SQLite database.
@@ -47,7 +175,15 @@ def get_connection():
     We also enable foreign key enforcement — SQLite disables it
     by default, which would allow orphaned rows (e.g. transactions
     with no matching user). Enforcing it keeps the data consistent.
+
+    If Turso credentials are configured, connections are routed to the hosted
+    libSQL database (which persists across Streamlit Cloud restarts); otherwise
+    a local SQLite file is used — unchanged behaviour for local dev and tests.
     """
+    url, token = _turso_credentials()
+    if url and token:
+        return _connect_turso(url, token)
+
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
 
     # Return rows as dictionaries (column_name: value) instead of

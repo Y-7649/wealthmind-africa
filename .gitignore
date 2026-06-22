@@ -16,6 +16,9 @@ env/
 .env
 .env.local
 
+# Streamlit secrets — contains the Turso auth token, NEVER commit this
+.streamlit/secrets.toml
+
 # OS files
 .DS_Store
 Thumbs.db
