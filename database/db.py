@@ -150,17 +150,28 @@ class _TursoConnection:
 
 
 def _connect_turso(url: str, token: str) -> "_TursoConnection":
-    """Open a connection to the hosted Turso database (fails loudly if the
-    driver is missing, so data is never silently written to ephemeral storage)."""
+    """
+    Open a REMOTE-ONLY connection to the hosted Turso database (write-through to
+    the cloud — the correct model for an ephemeral host, no local replica file).
+
+    Prefers the `libsql` package (ships manylinux wheels for cp311–cp313, so it
+    installs on Streamlit Cloud's Python) and falls back to `libsql-experimental`
+    if that's what happens to be installed. Fails loudly if neither is present,
+    so data is never silently written to ephemeral storage.
+    """
     try:
-        import libsql_experimental as libsql
-    except ImportError as e:
-        raise RuntimeError(
-            "TURSO_DATABASE_URL / TURSO_AUTH_TOKEN are set but the "
-            "'libsql-experimental' package is not installed. Add it to "
-            "requirements.txt and redeploy."
-        ) from e
-    raw = libsql.connect(database=url, auth_token=token)
+        import libsql
+    except ImportError:
+        try:
+            import libsql_experimental as libsql  # type: ignore
+        except ImportError as e:
+            raise RuntimeError(
+                "TURSO_DATABASE_URL / TURSO_AUTH_TOKEN are set but no libSQL "
+                "driver is installed. Add 'libsql' to requirements.txt and redeploy."
+            ) from e
+    # Passing the libsql:// URL positionally makes this a remote connection
+    # (the driver detects the URL scheme); no local file is created.
+    raw = libsql.connect(url, auth_token=token)
     return _TursoConnection(raw)
 
 

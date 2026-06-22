@@ -1,4 +1,4 @@
 streamlit>=1.35.0
 plotly>=5.20.0
 bcrypt>=4.1.0
-libsql-experimental>=0.0.30   # hosted Turso/libSQL persistence (see database/db.py)
+libsql>=0.1.11   # hosted Turso/libSQL persistence (manylinux wheels incl. cp313; see database/db.py)
