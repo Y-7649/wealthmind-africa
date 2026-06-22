@@ -70,17 +70,22 @@ def _turso_credentials():
 
 def _split_sql_script(script: str) -> list:
     """
-    Split a multi-statement SQL script into individual statements, dropping SQL
-    line comments and blank statements. Lets the libSQL adapter run schema.sql
-    without relying on a native executescript().
+    Split a multi-statement SQL script into individual statements for drivers
+    without a native executescript().
+
+    Comments are stripped FIRST (both full-line and inline), so a ';' that appears
+    inside a comment — e.g. "-- aggregate-only; never shown" — is never mistaken
+    for a statement terminator. This is safe for this project's schema, which has
+    no '--' or ';' inside any string literal.
     """
-    statements = []
-    for chunk in script.split(";"):
-        lines = [ln for ln in chunk.splitlines() if not ln.strip().startswith("--")]
-        stmt = "\n".join(lines).strip()
-        if stmt:
-            statements.append(stmt)
-    return statements
+    cleaned = []
+    for line in script.splitlines():
+        marker = line.find("--")
+        if marker != -1:
+            line = line[:marker]          # drop the comment portion of the line
+        cleaned.append(line)
+    joined = "\n".join(cleaned)
+    return [stmt.strip() for stmt in joined.split(";") if stmt.strip()]
 
 
 class _DictCursor:
