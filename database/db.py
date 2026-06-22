@@ -808,3 +808,129 @@ def get_monthly_transaction_growth() -> list[dict]:
         return [dict(row) for row in rows]
     finally:
         conn.close()
+
+
+# ── 7. ASSESSMENT OPERATIONS (anonymous research records) ─────────────────────
+# One row per completed Financial Behaviour Assessment. Anonymous by default
+# (user_id NULL). Only rows where the respondent consented are ever written —
+# the consent check happens at the call site, so save_assessment is only
+# invoked for opted-in respondents. Like section 6, the read functions return
+# cohort-level aggregates only: no individual record is ever exposed in the UI.
+
+# Columns written by save_assessment, in order. Centralised so the INSERT and
+# any future column addition stay in lockstep.
+_ASSESSMENT_COLUMNS = [
+    "user_id", "source", "currency", "consent",
+    "age_band", "life_stage", "gender",
+    "ans_income", "ans_savings", "ans_commitment", "ans_buffer",
+    "ans_timing", "ans_consistency", "ans_categories", "ans_inflation",
+    "income_estimate", "savings_rate_pct", "commitment_rate_pct",
+    "emergency_fund_months", "spending_cv", "bias_index",
+    "health_score", "savings_score", "resilience_score",
+    "consistency_score", "commitment_score", "present_bias_score",
+    "present_bias_label",
+]
+
+
+def save_assessment(record: dict) -> int:
+    """
+    Persist one completed assessment and return its new row id.
+
+    `record` is the dict produced by core.assessment.score_assessment().
+    Any key not present defaults to NULL. This function performs NO scoring —
+    it only stores what the assessment engine computed, keeping the data layer
+    and the economics cleanly separated.
+    """
+    cols = ", ".join(_ASSESSMENT_COLUMNS)
+    placeholders = ", ".join("?" * len(_ASSESSMENT_COLUMNS))
+    values = [record.get(col) for col in _ASSESSMENT_COLUMNS]
+
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            f"INSERT INTO assessments ({cols}) VALUES ({placeholders})",
+            values,
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def count_assessments() -> int:
+    """Total number of completed (consented) assessment respondents."""
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT COUNT(*) AS n FROM assessments").fetchone()["n"]
+    finally:
+        conn.close()
+
+
+def count_anonymous_assessments() -> int:
+    """
+    Assessments not linked to a registered account (user_id IS NULL).
+
+    Used to compute total unique participants without double-counting a
+    respondent who later claims an account.
+    """
+    conn = get_connection()
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) AS n FROM assessments WHERE user_id IS NULL"
+        ).fetchone()["n"]
+    finally:
+        conn.close()
+
+
+def get_assessment_scores() -> list[dict]:
+    """
+    Return per-respondent scores + demographics for cohort aggregation.
+
+    Anonymised: no id, no timestamp, no link to identity — only the economic
+    quantities and the aggregate-only demographic bands. This is the bridge
+    that lets the analytics engine pool assessment respondents with tracking
+    users on identical scoring.
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT age_band, life_stage, gender,
+                   savings_rate_pct, commitment_rate_pct, emergency_fund_months, bias_index,
+                   health_score, savings_score, resilience_score,
+                   consistency_score, commitment_score, present_bias_score,
+                   present_bias_label, ans_categories
+            FROM   assessments
+            """
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+def get_assessment_growth() -> list[dict]:
+    """
+    Assessment completions per calendar month with a running cumulative total.
+    Returns [{"month": "YYYY-MM", "completed": int, "cumulative": int}].
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT   substr(created_at, 1, 7) AS month, COUNT(*) AS completed
+            FROM     assessments
+            GROUP BY month
+            ORDER BY month
+            """
+        ).fetchall()
+        result, running = [], 0
+        for row in rows:
+            running += row["completed"]
+            result.append({
+                "month": row["month"],
+                "completed": row["completed"],
+                "cumulative": running,
+            })
+        return result
+    finally:
+        conn.close()

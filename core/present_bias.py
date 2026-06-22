@@ -63,6 +63,11 @@ def _classify_bias(index: float) -> tuple[str, str]:
         return "Reverse Pattern",       "#8888FF"
 
 
+# Public alias — the canonical bias classifier, shared with core/assessment.py
+# so the Quick Assessment labels present bias identically to the tracker.
+classify_bias = _classify_bias
+
+
 # ── MAIN CALCULATION FUNCTION ─────────────────────────────────────────────────
 
 def calculate_present_bias(user_id: int, currency: str = "KES") -> dict:

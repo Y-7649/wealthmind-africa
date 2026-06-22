@@ -161,6 +161,31 @@ def show_landing_page():
             unsafe_allow_html=True,
         )
 
+        # Primary CTA — the 2-minute assessment is now the main entry point
+        st.markdown(
+            """
+            <div class="wm-fade-2" style="margin:0.4rem 0 0.9rem;">
+                <a href="/assessment" target="_self"
+                   style="display:flex; align-items:center; justify-content:center;
+                          gap:0.6rem; background:linear-gradient(135deg,#00C49F,#00A07F);
+                          border-radius:12px; padding:0.95rem 1.4rem;
+                          color:#062019; font-size:1.05rem; font-weight:800;
+                          text-decoration:none; letter-spacing:-0.01em;
+                          box-shadow:0 8px 30px rgba(0,196,159,0.18);">
+                    🧭 &nbsp;Start the 2-Minute Assessment
+                </a>
+                <div style="text-align:center; color:#4A6070; font-size:0.76rem;
+                            margin-top:0.45rem;">
+                    Anonymous · No account needed · A behavioural economics study
+                    of how young Kenyans make money decisions
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.page_link("pages/00_assessment.py",
+                     label="🧭  Take the 2-Minute Financial Behaviour Assessment")
+
         # Kenya Context CTA — public page link
         st.markdown(
             """

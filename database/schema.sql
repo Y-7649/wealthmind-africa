@@ -93,3 +93,64 @@ CREATE TABLE IF NOT EXISTS goals (
 
 CREATE INDEX IF NOT EXISTS idx_goals_user
     ON goals(user_id);
+
+-- ============================================================
+-- ASSESSMENTS
+-- One honest record per completed Financial Behaviour Assessment.
+--
+-- WealthMind's research backbone: a behavioural economics assessment
+-- studying financial decision-making across different age groups and
+-- life stages. Each row is one anonymous respondent (user_id is NULL
+-- unless they later claim an account).
+--
+-- NO synthetic transactions are ever created. The assessment maps a
+-- respondent's self-reported answers to the SAME intermediate quantities
+-- the tracker derives from transactions, then applies the SAME scoring
+-- functions (core/health_score, core/present_bias). One source of truth.
+--
+-- Only rows where consent = 'yes' are ever written — if a respondent
+-- declines, their results are shown but nothing is saved.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS assessments (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at            TEXT    NOT NULL DEFAULT (DATETIME('now')),
+    user_id               INTEGER REFERENCES users(id),   -- NULL = anonymous
+    source                TEXT    NOT NULL DEFAULT 'assessment',  -- assessment | tracker | imported
+    currency              TEXT    NOT NULL DEFAULT 'KES',
+    consent               TEXT    NOT NULL DEFAULT 'yes',  -- only 'yes' rows are stored
+
+    -- Demographics (aggregate-only; never displayed individually)
+    age_band              TEXT,
+    life_stage            TEXT,
+    gender                TEXT,
+
+    -- Raw answer codes — auditable, and allow recomputation if a curve changes
+    ans_income            TEXT,
+    ans_savings           TEXT,
+    ans_commitment        TEXT,
+    ans_buffer            TEXT,
+    ans_timing            TEXT,
+    ans_consistency       TEXT,
+    ans_categories        TEXT,   -- two category codes, comma-joined
+    ans_inflation         TEXT,
+
+    -- Derived engine inputs (unit-free except income_estimate)
+    income_estimate       REAL,
+    savings_rate_pct      REAL,
+    commitment_rate_pct   REAL,
+    emergency_fund_months REAL,
+    spending_cv           REAL,
+    bias_index            REAL,
+
+    -- Final scores (produced by the SHARED scoring functions)
+    health_score          REAL,
+    savings_score         REAL,
+    resilience_score      REAL,
+    consistency_score     REAL,
+    commitment_score      REAL,
+    present_bias_score    REAL,
+    present_bias_label    TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_assessments_created
+    ON assessments(created_at);

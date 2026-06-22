@@ -29,6 +29,19 @@ import statistics
 from database.db import get_current_balance, get_monthly_summaries_range
 
 
+# ── COMPOSITE WEIGHTS (single source of truth) ────────────────────────────────
+# Defined at module level so the Financial Health Score is computed identically
+# wherever it is needed — the long-term tracker (calculate_health_score below)
+# AND the Quick Assessment (core/assessment.py) import this exact dict. There is
+# only one definition of how the four dimensions combine.
+HEALTH_WEIGHTS = {
+    "savings_rate":   0.35,   # most direct indicator of financial discipline
+    "emergency_fund": 0.30,   # determines resilience to income shocks
+    "consistency":    0.20,   # reveals spending behaviour patterns
+    "commitment":     0.15,   # lower weight — young adults may not yet invest
+}
+
+
 # ── SCORING FUNCTIONS ─────────────────────────────────────────────────────────
 # Each function converts a raw value to a 0–100 score using
 # linear interpolation between research-based benchmark points.
@@ -146,6 +159,17 @@ def _score_investment_commitment(rate_pct: float) -> float:
         return 100.0
 
 
+# ── PUBLIC SCORING API (shared with core/assessment.py) ───────────────────────
+# The four scoring curves above are the canonical mapping from a raw economic
+# quantity to a 0–100 sub-score. They are exposed here under public names so the
+# Quick Assessment scores a respondent on the IDENTICAL curves the tracker uses.
+# One implementation, one source of truth — the assessment cannot drift.
+score_savings_rate          = _score_savings_rate
+score_emergency_fund        = _score_emergency_fund
+score_spending_consistency  = _score_spending_consistency
+score_investment_commitment = _score_investment_commitment
+
+
 # ── MAIN CALCULATION FUNCTION ─────────────────────────────────────────────────
 
 def calculate_health_score(user_id: int) -> dict:
@@ -248,18 +272,13 @@ def calculate_health_score(user_id: int) -> dict:
     commitment_score     = _score_investment_commitment(commitment_rate_pct)
 
     # ── COMPOSITE SCORE ───────────────────────────────────────────────────────
-    WEIGHTS = {
-        "savings_rate":   0.35,
-        "emergency_fund": 0.30,
-        "consistency":    0.20,
-        "commitment":     0.15,
-    }
-
+    # Uses the module-level HEALTH_WEIGHTS — the same dict the Quick Assessment
+    # imports, so the composite is identical in both contexts.
     overall_score = (
-        savings_rate_score   * WEIGHTS["savings_rate"]   +
-        emergency_fund_score * WEIGHTS["emergency_fund"] +
-        consistency_score    * WEIGHTS["consistency"]    +
-        commitment_score     * WEIGHTS["commitment"]
+        savings_rate_score   * HEALTH_WEIGHTS["savings_rate"]   +
+        emergency_fund_score * HEALTH_WEIGHTS["emergency_fund"] +
+        consistency_score    * HEALTH_WEIGHTS["consistency"]    +
+        commitment_score     * HEALTH_WEIGHTS["commitment"]
     )
 
     return {
