@@ -100,11 +100,12 @@ st.markdown(
     <div class="imp-kicker">WealthMind Africa &nbsp;·&nbsp; Behavioural Economics Field Report</div>
     <div class="imp-title">School Impact Report</div>
     <div class="imp-deck">
-        WealthMind Africa is used by students as an applied-economics tool — and, in
-        aggregate, as a small-scale behavioural economics study. This report summarises
-        what the platform has measured across its user cohort: savings behaviour, present
-        bias, financial resilience, and spending composition. All figures are anonymised
-        aggregates; no individual is identifiable.
+        WealthMind Africa is a behavioural economics study of how people across different
+        age groups and life stages in Kenya make financial decisions. Most participants
+        take a 2-minute anonymous assessment; some also track their finances over time.
+        This report summarises what the platform has measured across that cohort: savings
+        behaviour, present bias, financial resilience, and spending composition. All
+        figures are anonymised aggregates; no individual is identifiable.
     </div>
     <div class="imp-byline">
         Compiled by <strong style="color:#556677;">Yash Karia</strong>
@@ -122,16 +123,16 @@ st.markdown(
     f"""
     <div class="imp-band">
         <div class="imp-stat">
-            <div class="imp-stat-val">{c['n_users']:,}</div>
-            <div class="imp-stat-lbl">Students in Cohort</div>
+            <div class="imp-stat-val">{c['participants']['total']:,}</div>
+            <div class="imp-stat-lbl">Study Participants</div>
         </div>
         <div class="imp-stat">
-            <div class="imp-stat-val">{c['n_transactions']:,}</div>
-            <div class="imp-stat-lbl">Transactions Analysed</div>
+            <div class="imp-stat-val">{c['participants']['n_assessment']:,}</div>
+            <div class="imp-stat-lbl">Via Quick Assessment</div>
         </div>
         <div class="imp-stat">
-            <div class="imp-stat-val">{cur} {c['value']['total']:,.0f}</div>
-            <div class="imp-stat-lbl">Total Value Analysed</div>
+            <div class="imp-stat-val">{c['participants']['n_tracking']:,}</div>
+            <div class="imp-stat-lbl">Ongoing Tracking</div>
         </div>
     </div>
     """,
@@ -139,9 +140,11 @@ st.markdown(
 )
 
 st.caption(
-    f"Active in the last 30 days: {c['n_active_30d']} student(s). "
-    f"Live behavioural findings activate automatically once the cohort reaches "
-    f"{MIN_PUBLIC_COHORT} students with sufficient data."
+    f"{c['participants']['n_assessment']} via the 2-minute assessment · "
+    f"{c['participants']['n_tracking']} through ongoing tracking · "
+    f"{c['n_transactions']:,} transactions analysed. "
+    f"Live behavioural findings activate automatically once {MIN_PUBLIC_COHORT}+ "
+    f"participants have contributed."
 )
 
 # ── FINDINGS ──────────────────────────────────────────────────────────────────
@@ -195,16 +198,16 @@ if live:
 
     finding(
         f"The average savings rate across the cohort is {h['avg_savings_rate']:.1f}%.",
-        f"Measured across {h['n_scored']} students with sufficient transaction history, against "
+        f"Measured across {h['n_scored']} participants with sufficient data, against "
         f"the 20% benchmark implied by Friedman's permanent-income hypothesis. "
         f"Median savings rate: {h['median_savings_rate']:.1f}%.",
         "Permanent Income Hypothesis · Friedman (1957)",
     )
     finding(
-        f"{b['pct_present_bias']:.0f}% of measured students exhibit present bias.",
-        f"Across {b['n_measured']} students, the cohort's average present-bias index is "
-        f"{b['avg_index']:.2f} (first-week vs last-week discretionary spending). This is a "
-        f"direct, observable trace of hyperbolic discounting in real spending data.",
+        f"{b['pct_present_bias']:.0f}% of measured participants exhibit present bias.",
+        f"Across {b['n_measured']} participants, the cohort's average present-bias index is "
+        f"{b['avg_index']:.2f}. This is a direct, observable trace of hyperbolic "
+        f"discounting in self-reported and recorded spending behaviour.",
         "Hyperbolic Discounting · Laibson (1997)",
     )
     if len(cats) >= 2:
@@ -216,7 +219,7 @@ if live:
         )
     finding(
         f"The median emergency fund covers {r['median_months']:.1f} months of expenses.",
-        f"{r['pct_below_3m']:.0f}% of students fall below the 3-month buffer that Deaton's (1991) "
+        f"{r['pct_below_3m']:.0f}% of participants fall below the 3-month buffer that Deaton's (1991) "
         f"buffer-stock theory treats as the minimum shock absorber — a measurable financial-resilience gap.",
         "Buffer Stock Theory · Deaton (1991)",
     )
@@ -302,7 +305,7 @@ with cc1:
     if savings_vals:
         fig = go.Figure(go.Histogram(x=savings_vals, nbinsx=10,
             marker_color="#00C49F", marker_line_width=0,
-            hovertemplate="%{x}% savings<br>%{y} students<extra></extra>"))
+            hovertemplate="%{x}% savings<br>%{y} participants<extra></extra>"))
         fig.add_vline(x=20, line_dash="dash", line_color="#7BC8A4",
                       annotation_text="20% benchmark", annotation_font_color="#7BC8A4")
         st.plotly_chart(_style(fig, "Savings Rate Distribution"), use_container_width=True)
@@ -311,7 +314,7 @@ with cc2:
     if bias_vals:
         fig = go.Figure(go.Histogram(x=bias_vals, nbinsx=12,
             marker_color="#FF8800", marker_line_width=0,
-            hovertemplate="Index %{x}<br>%{y} students<extra></extra>"))
+            hovertemplate="Index %{x}<br>%{y} participants<extra></extra>"))
         fig.add_vline(x=1.1, line_dash="dash", line_color="#FFCC00",
                       annotation_text="bias threshold", annotation_font_color="#FFCC00")
         st.plotly_chart(_style(fig, "Present Bias Index Distribution"), use_container_width=True)
@@ -322,7 +325,7 @@ with cc3:
     if health_vals:
         fig = go.Figure(go.Histogram(x=health_vals, nbinsx=10,
             marker_color="#4499FF", marker_line_width=0,
-            hovertemplate="Score %{x}<br>%{y} students<extra></extra>"))
+            hovertemplate="Score %{x}<br>%{y} participants<extra></extra>"))
         st.plotly_chart(_style(fig, "Financial Health Score Distribution"), use_container_width=True)
 
 with cc4:
@@ -342,6 +345,38 @@ with cc4:
             xaxis=dict(showgrid=True, gridcolor="#1A2030", color="#4A6070", ticksuffix="%"),
             yaxis=dict(showgrid=False, color="#7A9AB0"))
         st.plotly_chart(fig, use_container_width=True)
+
+# ── LIFE-STAGE COMPARISON (the cross-group finding) ──────────────────────────
+# Demographics exist only for assessment respondents; groups below the floor are
+# already filtered out in core/analytics.py. Shown only when the cohort is live
+# and at least two groups qualify.
+_ls = c.get("demographics", {}).get("by_life_stage", [])
+if live and len(_ls) >= 2:
+    st.markdown(
+        '<div class="imp-rule"><span class="imp-rule-text">Across Life Stages</span>'
+        '<div class="imp-rule-line"></div></div>',
+        unsafe_allow_html=True,
+    )
+    _hi = max(_ls, key=lambda g: g["avg_bias"])
+    _lo = min(_ls, key=lambda g: g["avg_bias"])
+    if _hi["group"] != _lo["group"]:
+        finding(
+            f"Present bias is higher among {_hi['group'].lower()}s than {_lo['group'].lower()}s.",
+            f"{_hi['group']}s show an average present-bias index of {_hi['avg_bias']:.2f} "
+            f"(n={_hi['n']}), versus {_lo['avg_bias']:.2f} for {_lo['group'].lower()}s "
+            f"(n={_lo['n']}) — consistent with the life-cycle view that financial "
+            f"self-control develops alongside income stability. Groups with fewer than "
+            f"{c['demographics']['min_group']} participants are not shown.",
+            "Life-Cycle Hypothesis · Laibson (1997)",
+        )
+    fig = go.Figure(go.Bar(
+        x=[g["group"] for g in _ls], y=[g["avg_bias"] for g in _ls],
+        marker_color="#FF8800", marker_line_width=0,
+        text=[f"{g['avg_bias']:.2f}" for g in _ls], textposition="outside",
+        textfont=dict(color="#7A9AB0", size=11),
+        hovertemplate="%{x}: index %{y:.2f}<extra></extra>"))
+    st.plotly_chart(_style(fig, "Average Present-Bias Index by Life Stage"),
+                    use_container_width=True)
 
 # ── METHODOLOGY + CTA ─────────────────────────────────────────────────────────
 
