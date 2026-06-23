@@ -138,6 +138,82 @@ CATEGORY_LABELS = {
     "education": "Education", "other": "Other",
 }
 
+# ── CURRENCY → INCOME-RANGE LABELS ────────────────────────────────────────────
+# The currency a respondent picks ONLY changes the income ranges shown on the
+# income question. The internal band codes (INCOME_CODES) and every scoring
+# function stay identical — the engine is unit-free, so currency never affects
+# any score.
+
+INCOME_CODES = ["i_u5", "i_5_15", "i_15_30", "i_30_60", "i_o60"]
+
+CURRENCY_LABELS = {
+    "KES":   "🇰🇪 KES — Kenyan Shilling",
+    "USD":   "🇺🇸 USD — US Dollar",
+    "GBP":   "🇬🇧 GBP — British Pound",
+    "EUR":   "🇪🇺 EUR — Euro",
+    "INR":   "🇮🇳 INR — Indian Rupee",
+    "Other": "🌍 Other",
+}
+
+CURRENCY_INCOME_LABELS = {
+    "KES":   ["Under KES 5,000", "KES 5,000–15,000", "KES 15,000–30,000",
+              "KES 30,000–60,000", "Above KES 60,000"],
+    "USD":   ["Under $50", "$50–150", "$150–300", "$300–600", "Above $600"],
+    "GBP":   ["Under £40", "£40–120", "£120–250", "£250–500", "Above £500"],
+    "EUR":   ["Under €50", "€50–140", "€140–280", "€280–550", "Above €550"],
+    "INR":   ["Under ₹4,000", "₹4,000–12,000", "₹12,000–25,000",
+              "₹25,000–50,000", "Above ₹50,000"],
+    "Other": ["Very low", "Low", "Moderate", "High", "Very high"],
+}
+
+
+def income_options(currency: str = "KES") -> list:
+    """
+    Return the income question's options for a given currency: the same band
+    CODES (INCOME_CODES), only the displayed labels change. Scoring is unaffected.
+    """
+    labels = CURRENCY_INCOME_LABELS.get(currency, CURRENCY_INCOME_LABELS["Other"])
+    return [{"code": code, "label": label} for code, label in zip(INCOME_CODES, labels)]
+
+
+# ── RESULTS COPY (plain-English; educational, not jargon) ─────────────────────
+
+SCORE_EXPLANATIONS = {
+    "health":       "Your overall financial wellbeing score based on your saving, "
+                    "spending, resilience, and planning habits.",
+    "present_bias": "Measures how much you prioritise spending today over preparing "
+                    "for future needs.",
+    "consistency":  "Measures how predictable your spending habits are.",
+    "savings":      "The percentage of your income that you regularly save.",
+    "resilience":   "Measures how long you could support yourself if your income stopped.",
+}
+
+
+def band_label(score: float) -> str:
+    """Map any 0–100 score to a simple, friendly band: Developing / Moderate / Strong."""
+    if score >= 70:
+        return "Strong"
+    if score >= 40:
+        return "Moderate"
+    return "Developing"
+
+
+# Verdict sentence fragments, keyed by behavioural dimension.
+STRENGTH_PHRASES = {
+    "savings":      "maintaining a healthy savings rate",
+    "resilience":   "maintaining an emergency buffer",
+    "consistency":  "keeping your spending consistent month to month",
+    "commitment":   "regularly committing money to savings or investment",
+    "present_bias": "resisting the pull to overspend right after income arrives",
+}
+OPPORTUNITY_PHRASES = {
+    "savings":      "increasing how much of your income you save",
+    "resilience":   "building a larger emergency buffer",
+    "consistency":  "making your month-to-month spending more consistent",
+    "commitment":   "setting money aside for savings or investment more regularly",
+    "present_bias": "reducing present bias by planning your spending earlier in the month",
+}
+
 # ── ASSESSMENT STRUCTURE (data-driven; the UI renders this list) ──────────────
 # kind: "single" (pick one), "multi2" (pick exactly two), "consent" (final gate).
 # Demographic questions are flagged optional and used only in aggregate.
@@ -162,15 +238,24 @@ QUESTIONS = [
         "options": [{"code": k, "label": v} for k, v in GENDER_LABELS.items()],
     },
     {
+        "id": "currency", "kind": "single", "section": "Your finances",
+        "prompt": "What currency do you usually receive income in?",
+        "subtitle": "This only changes the income ranges shown next — everyone is "
+                    "scored the same way.",
+        "options": [{"code": k, "label": v} for k, v in CURRENCY_LABELS.items()],
+    },
+    {
         "id": "income", "kind": "single", "section": "Your finances", "concept": "Income",
         "prompt": "In a typical month, roughly how much money comes in?",
         "subtitle": "Allowance, part-time work, family support, business — your best estimate.",
+        # NOTE: labels shown to the user are swapped per selected currency at render
+        # time (see income_options); these default KES labels are the fallback.
         "options": [
-            {"code": "i_u5",    "label": "Under 5,000"},
-            {"code": "i_5_15",  "label": "5,000 – 15,000"},
-            {"code": "i_15_30", "label": "15,000 – 30,000"},
-            {"code": "i_30_60", "label": "30,000 – 60,000"},
-            {"code": "i_o60",   "label": "Over 60,000"},
+            {"code": "i_u5",    "label": "Under KES 5,000"},
+            {"code": "i_5_15",  "label": "KES 5,000–15,000"},
+            {"code": "i_15_30", "label": "KES 15,000–30,000"},
+            {"code": "i_30_60", "label": "KES 30,000–60,000"},
+            {"code": "i_o60",   "label": "Above KES 60,000"},
         ],
     },
     {

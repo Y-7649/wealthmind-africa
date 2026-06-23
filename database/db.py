@@ -1086,3 +1086,45 @@ def get_assessment_growth() -> list[dict]:
         return result
     finally:
         conn.close()
+
+
+# ── 8. REPORT-REQUEST OPERATIONS (optional email capture) ─────────────────────
+# Kept deliberately separate from the assessment record so the research dataset
+# stays anonymous. A report request stores an email plus a snapshot of the four
+# headline scores — never a foreign key to an assessments row.
+
+
+def save_report_request(email: str, record: dict) -> int:
+    """
+    Persist an optional personalised-report request and return its new row id.
+
+    Called only when a participant opts in AFTER seeing their results — taking
+    the assessment never depends on it. Stores the email and a snapshot of the
+    scores to send; no link to the anonymous assessment row is created.
+
+    TODO(email-delivery): nothing is actually emailed yet. Wire up delivery via
+    SMTP or Resend (add the dependency + an API key in Streamlit secrets), send
+    the report, then set report_requests.sent = 1. These rows are the send queue.
+    """
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """
+            INSERT INTO report_requests
+                (email, health_score, present_bias_score,
+                 resilience_score, savings_score, present_bias_label)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                email,
+                record.get("health_score"),
+                record.get("present_bias_score"),
+                record.get("resilience_score"),
+                record.get("savings_score"),
+                record.get("present_bias_label"),
+            ),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()

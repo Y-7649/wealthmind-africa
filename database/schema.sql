@@ -154,3 +154,27 @@ CREATE TABLE IF NOT EXISTS assessments (
 
 CREATE INDEX IF NOT EXISTS idx_assessments_created
     ON assessments(created_at);
+
+-- ============================================================
+-- REPORT_REQUESTS
+-- Optional email capture for participants who want a personalised report.
+-- Stored SEPARATELY from the anonymous assessments table, so the research
+-- dataset stays anonymous: this table holds an email plus a snapshot of the
+-- scores to send, never a link back to an assessment row. Only written when a
+-- participant opts in AFTER seeing their results (never required to finish).
+-- (No semicolons in these comments — the libSQL adapter splits on semicolons.)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS report_requests (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at         TEXT    NOT NULL DEFAULT (DATETIME('now')),
+    email              TEXT    NOT NULL,
+    health_score       REAL,
+    present_bias_score REAL,
+    resilience_score   REAL,
+    savings_score      REAL,
+    present_bias_label TEXT,
+    sent               INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_report_requests_created
+    ON report_requests(created_at);

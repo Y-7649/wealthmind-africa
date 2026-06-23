@@ -25,11 +25,18 @@ from core.assessment import (
     QUESTIONS,
     score_assessment,
     generate_assessment_insights,
-    ASSESSMENT_NAME,
-    ASSESSMENT_TAGLINE,
-    ASSESSMENT_INTRO,
+    income_options,
+    band_label,
+    SCORE_EXPLANATIONS,
+    STRENGTH_PHRASES,
+    OPPORTUNITY_PHRASES,
 )
-from database.db import save_assessment, get_assessment_scores, initialise_database
+from database.db import (
+    save_assessment,
+    get_assessment_scores,
+    save_report_request,
+    initialise_database,
+)
 from utils.styles import inject_global_styles
 from utils.footer import render_footer
 
@@ -116,7 +123,17 @@ st.markdown(
         text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.4rem;
     }
     .score-tile .val { font-size:2rem; font-weight:800; letter-spacing:-0.03em; line-height:1; }
-    .score-tile .sub { font-size:0.72rem; color:#8899AA; margin-top:0.35rem; }
+    .score-tile .band { font-size:0.74rem; font-weight:700; margin-top:0.2rem; }
+    .score-tile .sub { font-size:0.72rem; color:#8899AA; margin-top:0.2rem; }
+    /* Results: plain-English explanations */
+    .explain-row { display:flex; gap:0.7rem; padding:0.5rem 0; border-bottom:1px solid #161D2A; }
+    .explain-row:last-child { border-bottom:none; }
+    .explain-name { color:#DDE8F4; font-weight:600; font-size:0.84rem; min-width:150px; }
+    .explain-text { color:#8899AA; font-size:0.82rem; line-height:1.45; }
+    @media (max-width:560px){
+        .explain-row { flex-direction:column; gap:0.1rem; }
+        .explain-name { min-width:0; }
+    }
     /* Share card */
     .share-card {
         max-width:380px; margin:0.5rem auto;
@@ -142,6 +159,7 @@ ss.setdefault("asmt_qidx", 0)
 ss.setdefault("asmt_answers", {"currency": "KES"})
 ss.setdefault("asmt_saved", False)
 ss.setdefault("asmt_result", None)
+ss.setdefault("asmt_email_done", False)
 
 TOTAL = len(QUESTIONS)
 
@@ -152,6 +170,7 @@ def _reset():
     ss.asmt_answers = {"currency": "KES"}
     ss.asmt_saved = False
     ss.asmt_result = None
+    ss.asmt_email_done = False
 
 
 def _finalize():
@@ -168,35 +187,55 @@ def _finalize():
 
 def render_intro():
     st.markdown(
-        f"""
-        <div class="wm-fade-1" style="text-align:center; padding:1.5rem 0 0.5rem;">
+        """
+        <div class="wm-fade-1" style="text-align:center; padding:1.2rem 0 0.3rem;">
             <div style="font-size:0.7rem;font-weight:700;color:#00C49F;
                         text-transform:uppercase;letter-spacing:0.18em;margin-bottom:0.8rem;">
-                {ASSESSMENT_NAME}
+                WealthMind Africa &nbsp;·&nbsp; Quick Assessment
             </div>
-            <h1 style="font-size:2rem;color:#E2E8F0;letter-spacing:-0.03em;
-                       line-height:1.2;margin:0 0 0.8rem;">
-                {ASSESSMENT_INTRO}
+            <h1 style="font-size:1.9rem;color:#E2E8F0;letter-spacing:-0.03em;
+                       line-height:1.22;margin:0 0 0.7rem;">
+                How do people make financial decisions?
             </h1>
-            <p style="color:#8899AA;font-size:0.95rem;line-height:1.6;max-width:520px;margin:0 auto 0.5rem;">
-                {ASSESSMENT_TAGLINE}
+            <p style="color:#8899AA;font-size:0.95rem;line-height:1.6;max-width:540px;margin:0 auto;">
+                WealthMind Africa is a behavioural economics platform studying how
+                people make financial decisions. This 2-minute assessment gives you an
+                instant, personalised snapshot of your own financial behaviour.
             </p>
-            <p style="color:#4A6070;font-size:0.8rem;margin-top:1rem;">
-                ⏱ About 2 minutes &nbsp;·&nbsp; 🔒 Anonymous &nbsp;·&nbsp; No account needed
-            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    # What it measures
+    st.markdown(
+        """
+        <div class="wm-fade-2" style="background:linear-gradient(145deg,#141B28,#111620);
+             border:1px solid #1E2738;border-radius:14px;padding:1.1rem 1.3rem;margin:1.1rem 0 0.9rem;">
+            <div style="font-size:0.66rem;font-weight:700;color:#4A6070;text-transform:uppercase;
+                 letter-spacing:0.1em;margin-bottom:0.75rem;">What it measures</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem 1rem;">
+                <div style="color:#DDE8F4;font-size:0.92rem;">📊 &nbsp;Financial Health</div>
+                <div style="color:#DDE8F4;font-size:0.92rem;">💰 &nbsp;Savings Habits</div>
+                <div style="color:#DDE8F4;font-size:0.92rem;">🛡️ &nbsp;Emergency Resilience</div>
+                <div style="color:#DDE8F4;font-size:0.92rem;">🧠 &nbsp;Present Bias</div>
+            </div>
+        </div>
+        <div class="wm-fade-3" style="text-align:center;color:#4A6070;font-size:0.8rem;
+             margin-bottom:0.5rem;">
+            ⏱ About 2 minutes &nbsp;·&nbsp; 🔒 Anonymous by default &nbsp;·&nbsp; ⚡ Instant results
         </div>
         """,
         unsafe_allow_html=True,
     )
     _, mid, _ = st.columns([1, 2, 1])
     with mid:
-        if st.button("Begin the assessment  →", use_container_width=True, type="primary", key="begin"):
+        if st.button("Start Assessment  →", use_container_width=True, type="primary", key="begin"):
             ss.asmt_phase = "questions"
             ss.asmt_qidx = 0
             st.rerun()
     st.caption(
-        "Your individual answers are never shown to anyone. Only anonymous, "
-        "aggregate patterns are studied — and only if you consent at the end."
+        "Your individual answers are never shown to anyone. If you choose to, your "
+        "anonymous responses contribute to WealthMind's financial-behaviour research."
     )
 
 
@@ -273,7 +312,13 @@ def render_question(q: dict):
         return
 
     # ── single choice ─────────────────────────────────────────────────────────
-    for o in q["options"]:
+    # The income question's labels follow the currency picked on the previous
+    # screen; the band codes (and therefore scoring) are identical regardless.
+    options = q["options"]
+    if q["id"] == "income":
+        options = income_options(ss.asmt_answers.get("currency", "KES"))
+
+    for o in options:
         if st.button(o["label"], use_container_width=True, key=f"opt_{q['id']}_{o['code']}"):
             ss.asmt_answers[q["id"]] = o["code"]
             _advance()
@@ -323,16 +368,16 @@ def render_results():
         below = sum(1 for s in health_list if s < rec["health_score"])
         percentile = round(below / len(health_list) * 100)
 
-    # strongest / weakest behavioural dimension
+    # behavioural dimensions (key, display name, score) — drive the verdict
     dims = [
-        ("Savings rate",          rec["savings_score"]),
-        ("Emergency buffer",      rec["resilience_score"]),
-        ("Spending consistency",  rec["consistency_score"]),
-        ("Investment commitment", rec["commitment_score"]),
-        ("Resisting present bias", rec["present_bias_score"]),
+        ("savings",      "Savings rate",           rec["savings_score"]),
+        ("resilience",   "Emergency buffer",       rec["resilience_score"]),
+        ("consistency",  "Spending consistency",   rec["consistency_score"]),
+        ("commitment",   "Investment commitment",  rec["commitment_score"]),
+        ("present_bias", "Resisting present bias", rec["present_bias_score"]),
     ]
-    strongest = max(dims, key=lambda d: d[1])
-    weakest   = min(dims, key=lambda d: d[1])
+    strongest = max(dims, key=lambda d: d[2])
+    weakest   = min(dims, key=lambda d: d[2])
 
     st.markdown(
         f"<div class='wm-fade-1' style='text-align:center;padding:0.5rem 0;'>"
@@ -357,43 +402,68 @@ def render_results():
         <div class="score-grid wm-fade-2">
           <div class="score-tile"><div class="lbl">Financial Health</div>
             <div class="val" style="color:{hc};">{rec['health_score']:.0f}</div>
+            <div class="band" style="color:{hc};">{band_label(rec['health_score'])}</div>
             <div class="sub">out of 100</div></div>
           <div class="score-tile"><div class="lbl">Present Bias</div>
             <div class="val" style="color:{pc};">{rec['present_bias_score']:.0f}</div>
+            <div class="band" style="color:{pc};">{band_label(rec['present_bias_score'])}</div>
             <div class="sub">{rec['present_bias_label']}</div></div>
-          <div class="score-tile"><div class="lbl">Resilience</div>
+          <div class="score-tile"><div class="lbl">Emergency Resilience</div>
             <div class="val" style="color:{rcl};">{rec['resilience_score']:.0f}</div>
+            <div class="band" style="color:{rcl};">{band_label(rec['resilience_score'])}</div>
             <div class="sub">≈ {rec['emergency_fund_months']:.1f} months buffer</div></div>
-          <div class="score-tile"><div class="lbl">Savings</div>
+          <div class="score-tile"><div class="lbl">Savings Rate</div>
             <div class="val" style="color:{sc};">{rec['savings_score']:.0f}</div>
+            <div class="band" style="color:{sc};">{band_label(rec['savings_score'])}</div>
             <div class="sub">≈ {rec['savings_rate_pct']:.0f}% of income kept</div></div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # strongest / weakest
+    # ── VERDICT: strongest habit + biggest opportunity ───────────────────────
     c1, c2 = st.columns(2)
     with c1:
         st.markdown(
             f"<div style='background:rgba(0,196,159,0.06);border:1px solid rgba(0,196,159,0.2);"
-            f"border-radius:10px;padding:0.9rem 1.1rem;'>"
+            f"border-radius:10px;padding:0.9rem 1.1rem;height:100%;'>"
             f"<div style='font-size:0.65rem;color:#00C49F;font-weight:700;text-transform:uppercase;"
-            f"letter-spacing:0.1em;'>💪 Strongest habit</div>"
-            f"<div style='color:#E2E8F0;font-weight:600;margin-top:0.3rem;'>{strongest[0]}</div>"
-            f"<div style='color:#8899AA;font-size:0.8rem;'>{strongest[1]:.0f}/100</div></div>",
+            f"letter-spacing:0.1em;margin-bottom:0.35rem;'>💪 Strongest Financial Habit</div>"
+            f"<div style='color:#DDE8F4;font-size:0.9rem;line-height:1.5;'>"
+            f"Your strongest habit is {STRENGTH_PHRASES[strongest[0]]}.</div></div>",
             unsafe_allow_html=True,
         )
     with c2:
         st.markdown(
             f"<div style='background:rgba(255,136,0,0.06);border:1px solid rgba(255,136,0,0.2);"
-            f"border-radius:10px;padding:0.9rem 1.1rem;'>"
+            f"border-radius:10px;padding:0.9rem 1.1rem;height:100%;'>"
             f"<div style='font-size:0.65rem;color:#FF8800;font-weight:700;text-transform:uppercase;"
-            f"letter-spacing:0.1em;'>⚠️ Biggest weakness</div>"
-            f"<div style='color:#E2E8F0;font-weight:600;margin-top:0.3rem;'>{weakest[0]}</div>"
-            f"<div style='color:#8899AA;font-size:0.8rem;'>{weakest[1]:.0f}/100</div></div>",
+            f"letter-spacing:0.1em;margin-bottom:0.35rem;'>🎯 Biggest Opportunity</div>"
+            f"<div style='color:#DDE8F4;font-size:0.9rem;line-height:1.5;'>"
+            f"Your biggest opportunity is {OPPORTUNITY_PHRASES[weakest[0]]}.</div></div>",
             unsafe_allow_html=True,
         )
+
+    # ── WHAT YOUR SCORES MEAN (plain English) ─────────────────────────────────
+    _expl = [
+        ("Financial Health",     SCORE_EXPLANATIONS["health"]),
+        ("Present Bias",         SCORE_EXPLANATIONS["present_bias"]),
+        ("Spending Consistency", SCORE_EXPLANATIONS["consistency"]),
+        ("Savings Rate",         SCORE_EXPLANATIONS["savings"]),
+        ("Emergency Resilience", SCORE_EXPLANATIONS["resilience"]),
+    ]
+    _rows = "".join(
+        f'<div class="explain-row"><div class="explain-name">{n}</div>'
+        f'<div class="explain-text">{t}</div></div>' for n, t in _expl
+    )
+    st.markdown(
+        f'<div style="background:#0F1824;border:1px solid #1E2738;border-radius:12px;'
+        f'padding:0.7rem 1.1rem;margin:1rem 0;">'
+        f'<div style="font-size:0.66rem;font-weight:700;color:#4A6070;text-transform:uppercase;'
+        f'letter-spacing:0.1em;margin-bottom:0.2rem;">What your scores mean</div>'
+        f'{_rows}</div>',
+        unsafe_allow_html=True,
+    )
 
     # one economic insight (the top insight from the existing engine)
     insights = generate_assessment_insights(rec)
@@ -465,6 +535,39 @@ def render_results():
         """,
         unsafe_allow_html=True,
     )
+
+    st.divider()
+
+    # ── OPTIONAL EMAIL REPORT (never required to complete the assessment) ──────
+    if ss.asmt_email_done:
+        st.success("✅ Thanks — we'll send your personalised report to that address soon.")
+    else:
+        st.markdown("#### 📩 Receive your personalised report")
+        st.markdown(
+            "<div style='color:#8899AA;font-size:0.85rem;line-height:1.55;margin-bottom:0.6rem;'>"
+            "A detailed breakdown of your scores, your financial profile, tailored "
+            "recommendations, and occasional research updates. Optional — your results "
+            "above are already complete.</div>",
+            unsafe_allow_html=True,
+        )
+        _report_email = st.text_input(
+            "Email address", key="report_email", placeholder="you@example.com",
+            label_visibility="collapsed",
+        )
+        _e1, _e2 = st.columns([2, 1])
+        with _e1:
+            if st.button("Send report", type="primary", use_container_width=True, key="send_report"):
+                _e = (_report_email or "").strip()
+                if "@" in _e and "." in _e.split("@")[-1] and len(_e) >= 5:
+                    save_report_request(_e, rec)
+                    ss.asmt_email_done = True
+                    st.rerun()
+                else:
+                    st.warning("Please enter a valid email address.")
+        with _e2:
+            if st.button("Skip", use_container_width=True, key="skip_report"):
+                ss.asmt_email_done = True
+                st.rerun()
 
     st.divider()
 
