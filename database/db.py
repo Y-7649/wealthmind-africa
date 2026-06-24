@@ -259,6 +259,13 @@ def _run_migrations(conn) -> None:
     if "last_login" not in existing:
         conn.execute("ALTER TABLE users ADD COLUMN last_login TEXT")
 
+    # report_requests.assessment_id — links a report email to its (separate)
+    # financial responses. PRAGMA returns no rows if the table doesn't exist yet,
+    # in which case schema.sql's CREATE already includes the column.
+    rr_cols = {row["name"] for row in conn.execute("PRAGMA table_info(report_requests)").fetchall()}
+    if rr_cols and "assessment_id" not in rr_cols:
+        conn.execute("ALTER TABLE report_requests ADD COLUMN assessment_id INTEGER")
+
 
 # ── 3. USER OPERATIONS ────────────────────────────────────────────────────────
 
@@ -1094,34 +1101,34 @@ def get_assessment_growth() -> list[dict]:
 # headline scores — never a foreign key to an assessments row.
 
 
-def save_report_request(email: str, record: dict) -> int:
+def save_report_request(assessment_id, email: str, record: dict, sent: int = 0) -> int:
     """
-    Persist an optional personalised-report request and return its new row id.
+    Persist a participant's report email and return its new row id.
 
-    Called only when a participant opts in AFTER seeing their results — taking
-    the assessment never depends on it. Stores the email and a snapshot of the
-    scores to send; no link to the anonymous assessment row is created.
-
-    TODO(email-delivery): nothing is actually emailed yet. Wire up delivery via
-    SMTP or Resend (add the dependency + an API key in Streamlit secrets), send
-    the report, then set report_requests.sent = 1. These rows are the send queue.
+    Contact data is stored here, SEPARATELY from the financial responses in the
+    assessments table — the two are connected only by `assessment_id`, never
+    merged into one row. `sent` records whether the email was delivered (1) or is
+    still queued (0). A score snapshot is stored so a queued report can be sent
+    later without re-joining.
     """
     conn = get_connection()
     try:
         cur = conn.execute(
             """
             INSERT INTO report_requests
-                (email, health_score, present_bias_score,
-                 resilience_score, savings_score, present_bias_label)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (assessment_id, email, health_score, present_bias_score,
+                 resilience_score, savings_score, present_bias_label, sent)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
+                assessment_id,
                 email,
                 record.get("health_score"),
                 record.get("present_bias_score"),
                 record.get("resilience_score"),
                 record.get("savings_score"),
                 record.get("present_bias_label"),
+                sent,
             ),
         )
         conn.commit()

@@ -39,6 +39,7 @@ from database.db import (
 )
 from utils.styles import inject_global_styles
 from utils.footer import render_footer
+from utils.email_report import send_report_email
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
 
@@ -154,12 +155,14 @@ st.markdown(
 # ── STATE ─────────────────────────────────────────────────────────────────────
 
 ss = st.session_state
-ss.setdefault("asmt_phase", "intro")     # intro | questions | results
+ss.setdefault("asmt_phase", "intro")     # intro | email | questions | results
 ss.setdefault("asmt_qidx", 0)
 ss.setdefault("asmt_answers", {"currency": "KES"})
 ss.setdefault("asmt_saved", False)
 ss.setdefault("asmt_result", None)
-ss.setdefault("asmt_email_done", False)
+ss.setdefault("asmt_email", "")
+ss.setdefault("asmt_send_ok", False)
+ss.setdefault("asmt_show_share", False)
 
 TOTAL = len(QUESTIONS)
 
@@ -170,16 +173,49 @@ def _reset():
     ss.asmt_answers = {"currency": "KES"}
     ss.asmt_saved = False
     ss.asmt_result = None
-    ss.asmt_email_done = False
+    ss.asmt_email = ""
+    ss.asmt_send_ok = False
+    ss.asmt_show_share = False
+
+
+def _valid_email(value: str) -> bool:
+    value = (value or "").strip()
+    return ("@" in value and "." in value.split("@")[-1]
+            and len(value) >= 5 and " " not in value)
 
 
 def _finalize():
-    """Score, save (only if consented), and move to results."""
+    """
+    Score, save the financial responses, store the email separately (linked by
+    the internal assessment id), send the report, and move to results.
+    Runs once (guarded) at the end of the question flow.
+    """
+    if ss.asmt_saved:
+        ss.asmt_phase = "results"
+        return
+
     record = score_assessment(ss.asmt_answers)
-    if record.get("consent") == "yes" and not ss.asmt_saved:
-        save_assessment(record)
-        ss.asmt_saved = True
+    email = ss.asmt_email
+
+    # 1. Save the financial responses (always — research use disclosed upfront).
+    assessment_id = save_assessment(record)
+
+    # 2. Send the personalised report (best-effort; never blocks the results).
+    send_ok = False
+    try:
+        send_ok, _ = send_report_email(email, record)
+    except Exception:
+        send_ok = False
+
+    # 3. Store the email SEPARATELY, linked only by the internal id.
+    try:
+        save_report_request(assessment_id, email, record, sent=1 if send_ok else 0)
+    except Exception:
+        pass
+
+    ss.asmt_saved = True
     ss.asmt_result = record
+    ss.asmt_send_ok = send_ok
     ss.asmt_phase = "results"
 
 
@@ -191,7 +227,7 @@ def render_intro():
         <div class="wm-fade-1" style="text-align:center; padding:1.2rem 0 0.3rem;">
             <div style="font-size:0.7rem;font-weight:700;color:#00C49F;
                         text-transform:uppercase;letter-spacing:0.18em;margin-bottom:0.8rem;">
-                WealthMind Africa &nbsp;·&nbsp; Quick Assessment
+                WealthMind Africa &nbsp;·&nbsp; Research Assessment
             </div>
             <h1 style="font-size:1.9rem;color:#E2E8F0;letter-spacing:-0.03em;
                        line-height:1.22;margin:0 0 0.7rem;">
@@ -199,8 +235,7 @@ def render_intro():
             </h1>
             <p style="color:#8899AA;font-size:0.95rem;line-height:1.6;max-width:540px;margin:0 auto;">
                 WealthMind Africa is a behavioural economics platform studying how
-                people make financial decisions. This 2-minute assessment gives you an
-                instant, personalised snapshot of your own financial behaviour.
+                people save, spend, and make financial decisions.
             </p>
         </div>
         """,
@@ -212,17 +247,19 @@ def render_intro():
         <div class="wm-fade-2" style="background:linear-gradient(145deg,#141B28,#111620);
              border:1px solid #1E2738;border-radius:14px;padding:1.1rem 1.3rem;margin:1.1rem 0 0.9rem;">
             <div style="font-size:0.66rem;font-weight:700;color:#4A6070;text-transform:uppercase;
-                 letter-spacing:0.1em;margin-bottom:0.75rem;">What it measures</div>
+                 letter-spacing:0.1em;margin-bottom:0.75rem;">This 2-minute assessment measures</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem 1rem;">
                 <div style="color:#DDE8F4;font-size:0.92rem;">📊 &nbsp;Financial Health</div>
                 <div style="color:#DDE8F4;font-size:0.92rem;">💰 &nbsp;Savings Habits</div>
-                <div style="color:#DDE8F4;font-size:0.92rem;">🛡️ &nbsp;Emergency Resilience</div>
+                <div style="color:#DDE8F4;font-size:0.92rem;">🛡️ &nbsp;Financial Resilience</div>
                 <div style="color:#DDE8F4;font-size:0.92rem;">🧠 &nbsp;Present Bias</div>
             </div>
         </div>
-        <div class="wm-fade-3" style="text-align:center;color:#4A6070;font-size:0.8rem;
-             margin-bottom:0.5rem;">
-            ⏱ About 2 minutes &nbsp;·&nbsp; 🔒 Anonymous by default &nbsp;·&nbsp; ⚡ Instant results
+        <div class="wm-fade-3" style="color:#8899AA;font-size:0.86rem;line-height:1.6;
+             text-align:center;max-width:540px;margin:0 auto 0.3rem;">
+            Your results will be emailed to you after completion. Your financial
+            responses are stored separately from your email address. Your anonymous
+            responses contribute to ongoing research into financial decision-making.
         </div>
         """,
         unsafe_allow_html=True,
@@ -230,13 +267,49 @@ def render_intro():
     _, mid, _ = st.columns([1, 2, 1])
     with mid:
         if st.button("Start Assessment  →", use_container_width=True, type="primary", key="begin"):
-            ss.asmt_phase = "questions"
-            ss.asmt_qidx = 0
+            ss.asmt_phase = "email"
             st.rerun()
-    st.caption(
-        "Your individual answers are never shown to anyone. If you choose to, your "
-        "anonymous responses contribute to WealthMind's financial-behaviour research."
+
+
+# ── EMAIL (required, before any questions) ────────────────────────────────────
+
+def render_email():
+    if st.button("←  Back", key="email_back"):
+        ss.asmt_phase = "intro"
+        st.rerun()
+
+    st.markdown(
+        """
+        <div style="text-align:center;padding:0.8rem 0 0.2rem;">
+            <h1 style="font-size:1.7rem;color:#E2E8F0;letter-spacing:-0.03em;
+                       line-height:1.25;margin:0 0 0.6rem;">
+                Where should we send your report?
+            </h1>
+            <p style="color:#8899AA;font-size:0.9rem;line-height:1.6;max-width:520px;margin:0 auto;">
+                Your personalised assessment report will be emailed to you after
+                completion. Your financial responses remain separate from your contact
+                information. Your email may also be used to share future findings from
+                the WealthMind Africa study.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
+    email = st.text_input(
+        "Email address", key="entry_email", placeholder="you@example.com",
+        value=ss.asmt_email, label_visibility="collapsed",
+    )
+    _, mid, _ = st.columns([1, 2, 1])
+    with mid:
+        if st.button("Continue  →", use_container_width=True, type="primary", key="email_continue"):
+            if _valid_email(email):
+                ss.asmt_email = email.strip()
+                ss.asmt_phase = "questions"
+                ss.asmt_qidx = 0
+                st.rerun()
+            else:
+                st.warning("Please enter a valid email address to continue.")
+    st.caption("🔒 We never display your email, and it is never stored with your financial answers.")
 
 
 # ── QUESTION ──────────────────────────────────────────────────────────────────
@@ -388,10 +461,6 @@ def render_results():
         unsafe_allow_html=True,
     )
 
-    if not ss.asmt_saved and rec.get("consent") == "no":
-        st.info("Your results are shown below. You chose not to contribute to the "
-                "study, so nothing was saved.")
-
     # four score tiles
     hc = _score_colour(rec["health_score"])
     pc = _score_colour(rec["present_bias_score"])
@@ -538,55 +607,39 @@ def render_results():
 
     st.divider()
 
-    # ── OPTIONAL EMAIL REPORT (never required to complete the assessment) ──────
-    if ss.asmt_email_done:
-        st.success("✅ Thanks — we'll send your personalised report to that address soon.")
+    # ── REPORT CONFIRMATION ───────────────────────────────────────────────────
+    if ss.asmt_send_ok:
+        st.success(f"📧 Your report has been sent to **{ss.asmt_email}**.")
     else:
-        st.markdown("#### 📩 Receive your personalised report")
-        st.markdown(
-            "<div style='color:#8899AA;font-size:0.85rem;line-height:1.55;margin-bottom:0.6rem;'>"
-            "A detailed breakdown of your scores, your financial profile, tailored "
-            "recommendations, and occasional research updates. Optional — your results "
-            "above are already complete.</div>",
-            unsafe_allow_html=True,
-        )
-        _report_email = st.text_input(
-            "Email address", key="report_email", placeholder="you@example.com",
-            label_visibility="collapsed",
-        )
-        _e1, _e2 = st.columns([2, 1])
-        with _e1:
-            if st.button("Send report", type="primary", use_container_width=True, key="send_report"):
-                _e = (_report_email or "").strip()
-                if "@" in _e and "." in _e.split("@")[-1] and len(_e) >= 5:
-                    save_report_request(_e, rec)
-                    ss.asmt_email_done = True
-                    st.rerun()
-                else:
-                    st.warning("Please enter a valid email address.")
-        with _e2:
-            if st.button("Skip", use_container_width=True, key="skip_report"):
-                ss.asmt_email_done = True
-                st.rerun()
+        st.info("📧 Your report is being prepared and will be sent shortly.")
 
-    st.divider()
+    # ── THANK YOU ─────────────────────────────────────────────────────────────
+    st.markdown(
+        "<div style='text-align:center;background:linear-gradient(145deg,#0F1824,#0A1018);"
+        "border:1px solid rgba(0,196,159,0.18);border-radius:14px;padding:1.3rem 1.4rem;"
+        "margin:0.6rem 0 0.5rem;'>"
+        "<div style='font-size:1.05rem;font-weight:700;color:#E2E8F0;margin-bottom:0.4rem;'>"
+        "Thank you for participating in the WealthMind Africa assessment.</div>"
+        "<div style='font-size:0.86rem;color:#8899AA;line-height:1.6;max-width:480px;margin:0 auto;'>"
+        "Your responses contribute to ongoing research into financial decision-making "
+        "across different ages and life stages.</div></div>",
+        unsafe_allow_html=True,
+    )
 
-    # CTAs
-    st.markdown("<div style='text-align:center;color:#8899AA;font-size:0.85rem;'>"
-                "Want to go further?</div>", unsafe_allow_html=True)
-    cta1, cta2, cta3 = st.columns(3)
-    with cta1:
-        st.page_link("pages/9_impact.py", label="📋 See the study so far")
-    with cta2:
-        st.page_link("app.py", label="📈 Track over time (free)")
-    with cta3:
-        st.page_link("pages/0_kenya_context.py", label="🌍 Kenya context")
-
-    _, mid, _ = st.columns([1, 2, 1])
-    with mid:
-        if st.button("↻ Retake the assessment", use_container_width=True, key="retake"):
+    t1, t2, t3 = st.columns(3)
+    with t1:
+        if st.button("📤 Share Assessment", use_container_width=True, key="ty_share"):
+            ss.asmt_show_share = True
+    with t2:
+        st.page_link("pages/9_impact.py", label="📋 View Impact Report")
+    with t3:
+        if st.button("✓ Finish", use_container_width=True, key="ty_finish"):
             _reset()
             st.rerun()
+
+    if ss.asmt_show_share:
+        st.code(f"https://{ASSESSMENT_URL}/assessment", language=None)
+        st.caption("Copy this link to invite others to take the assessment.")
 
     render_footer()
 
@@ -595,6 +648,8 @@ def render_results():
 
 if ss.asmt_phase == "intro":
     render_intro()
+elif ss.asmt_phase == "email":
+    render_email()
 elif ss.asmt_phase == "questions":
     render_question(QUESTIONS[ss.asmt_qidx])
 else:

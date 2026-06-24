@@ -181,8 +181,9 @@ def income_options(currency: str = "KES") -> list:
 SCORE_EXPLANATIONS = {
     "health":       "Your overall financial wellbeing score based on your saving, "
                     "spending, resilience, and planning habits.",
-    "present_bias": "Measures how much you prioritise spending today over preparing "
-                    "for future needs.",
+    "present_bias": "Present bias measures whether you focus more on today's spending "
+                    "than future financial goals. Higher scores indicate stronger "
+                    "long-term planning habits.",
     "consistency":  "Measures how predictable your spending habits are.",
     "savings":      "The percentage of your income that you regularly save.",
     "resilience":   "Measures how long you could support yourself if your income stopped.",
@@ -190,7 +191,9 @@ SCORE_EXPLANATIONS = {
 
 
 def band_label(score: float) -> str:
-    """Map any 0–100 score to a simple, friendly band: Developing / Moderate / Strong."""
+    """Map any 0–100 score to a simple, friendly band."""
+    if score >= 85:
+        return "Excellent"
     if score >= 70:
         return "Strong"
     if score >= 40:
@@ -211,8 +214,26 @@ OPPORTUNITY_PHRASES = {
     "resilience":   "building a larger emergency buffer",
     "consistency":  "making your month-to-month spending more consistent",
     "commitment":   "setting money aside for savings or investment more regularly",
-    "present_bias": "reducing present bias by planning your spending earlier in the month",
+    "present_bias": "improving long-term planning by reducing present bias",
 }
+
+
+def strongest_and_opportunity(record: dict) -> tuple:
+    """
+    Return (strongest_phrase, opportunity_phrase) for the results/email verdict.
+    A pure display helper over the already-computed sub-scores — it performs no
+    scoring of its own.
+    """
+    dims = [
+        ("savings",      record["savings_score"]),
+        ("resilience",   record["resilience_score"]),
+        ("consistency",  record["consistency_score"]),
+        ("commitment",   record["commitment_score"]),
+        ("present_bias", record["present_bias_score"]),
+    ]
+    strongest = max(dims, key=lambda d: d[1])[0]
+    weakest   = min(dims, key=lambda d: d[1])[0]
+    return STRENGTH_PHRASES[strongest], OPPORTUNITY_PHRASES[weakest]
 
 # ── ASSESSMENT STRUCTURE (data-driven; the UI renders this list) ──────────────
 # kind: "single" (pick one), "multi2" (pick exactly two), "consent" (final gate).
@@ -339,18 +360,12 @@ QUESTIONS = [
             {"code": "unsure",      "label": "Not sure"},
         ],
     },
-    {
-        "id": "consent", "kind": "consent", "section": "Before your results",
-        "prompt": "Would you like your anonymous responses to contribute to "
-                  "WealthMind's behavioural economics research study?",
-        "subtitle": "Your results are shown either way. We never store any "
-                    "identifying information.",
-        "options": [
-            {"code": "yes", "label": "Yes, include my anonymous responses"},
-            {"code": "no",  "label": "No, show my results only"},
-        ],
-    },
 ]
+# NOTE: the old in-flow consent question was removed. Research participation is
+# now disclosed on the introduction and email screens, and every completed
+# assessment is saved (score_assessment defaults consent="yes"). Email/contact
+# data is captured upfront and stored SEPARATELY from the financial responses,
+# linked only by an internal assessment id (see database.save_report_request).
 
 
 # ── SCORING ───────────────────────────────────────────────────────────────────

@@ -167,6 +167,9 @@ CREATE INDEX IF NOT EXISTS idx_assessments_created
 CREATE TABLE IF NOT EXISTS report_requests (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at         TEXT    NOT NULL DEFAULT (DATETIME('now')),
+    -- Internal link to the financial responses. Email lives here, the financial
+    -- answers live in assessments — connected only by this id, never merged.
+    assessment_id      INTEGER REFERENCES assessments(id),
     email              TEXT    NOT NULL,
     health_score       REAL,
     present_bias_score REAL,
