@@ -18,8 +18,14 @@ import streamlit as st
 import plotly.graph_objects as go
 
 from core.analytics import get_cohort_analytics
+from database.db import (
+    get_email_delivery_stats,
+    get_undelivered_reports,
+    mark_report_sent,
+)
 from utils.sidebar import render_sidebar
 from utils.footer import render_footer
+from utils.email_report import send_report_email, email_provider_configured
 
 # ── PAGE CONFIG ───────────────────────────────────────────────────────────────
 
@@ -329,5 +335,55 @@ st.caption(
     "All statistics are aggregated across the full user base. No individual account "
     "is identifiable on this page. Analytics are cached for 5 minutes."
 )
+
+st.divider()
+
+# ── EMAIL DELIVERY ────────────────────────────────────────────────────────────
+# Operational view of the participant report emails. Counts come from the
+# report_requests 'sent' flag (1 = delivered, 0 = undelivered). Undelivered rows
+# are "queued" when no provider is configured, or "failed" when one is.
+
+st.markdown("#### 📧 Email Delivery")
+
+_provider_on = email_provider_configured()
+_stats = get_email_delivery_stats()
+_undelivered = _stats["undelivered"]
+_failed = _undelivered if _provider_on else 0
+_queued = 0 if _provider_on else _undelivered
+
+_em1, _em2, _em3 = st.columns(3)
+_em1.metric("✅ Sent", _stats["sent"])
+_em2.metric("⚠️ Failed", _failed)
+_em3.metric("⏳ Queued", _queued)
+
+if _provider_on:
+    st.caption(
+        "Email provider configured. Undelivered reports are counted as **failed** — "
+        "use the button below to retry them. (Error details are in the app logs.)"
+    )
+else:
+    st.caption(
+        "⚠️ **No email provider configured** — reports are being captured but not sent. "
+        "Add the `SMTP_*` (Gmail) secrets to start delivery; undelivered reports are "
+        "**queued** and can be sent with the button below once a provider is set."
+    )
+
+if _undelivered > 0:
+    if st.button(f"📤 Resend {_undelivered} undelivered email(s)", type="primary", key="resend_emails"):
+        _rows = get_undelivered_reports()
+        _ok = 0
+        with st.spinner(f"Resending {len(_rows)} report(s)…"):
+            for _r in _rows:
+                _success, _ = send_report_email(_r["email"], _r)
+                mark_report_sent(_r["report_id"], 1 if _success else 0)
+                if _success:
+                    _ok += 1
+        if _ok == len(_rows):
+            st.success(f"Resent all {_ok} report(s) successfully.")
+        else:
+            st.warning(f"Resent {_ok} of {len(_rows)}. The rest failed — see the app logs for details.")
+        st.rerun()
+else:
+    st.caption("No undelivered report emails.")
 
 render_footer()

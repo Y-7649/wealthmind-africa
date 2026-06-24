@@ -24,11 +24,14 @@ stored (database.save_report_request) as a queued send.
 
 import os
 import json
+import logging
 import smtplib
 import urllib.request
 import urllib.error
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+logger = logging.getLogger("wealthmind.email")
 
 from core.assessment import (
     band_label,
@@ -209,18 +212,46 @@ def send_report_email(to_email: str, record: dict):
     """
     Send the personalised report. Returns (success: bool, detail: str).
 
-    Tries Resend first (if RESEND_API_KEY is set), then SMTP (if SMTP_HOST is
-    set). If neither is configured, returns (False, "not_configured") so the
-    caller can show the graceful "being prepared" message and keep the queued
-    row in report_requests for later delivery.
+    Delivery order:
+        1. SMTP (Gmail) is the PRIMARY provider — if SMTP_HOST is set, it is
+           always tried first.
+        2. Resend is the FALLBACK — used only if SMTP is unconfigured, or if a
+           configured SMTP attempt fails and RESEND_API_KEY is available.
+        3. If neither is configured, returns (False, "not_configured"); the
+           caller shows the graceful "being prepared" message and the row stays
+           queued (sent = 0) for a later resend.
+
+    All failures are logged (visible in the Streamlit Cloud app logs).
     """
     if not to_email:
         return False, "no_recipient"
     html = build_report_html(record)
-    api_key = _secret("RESEND_API_KEY")
-    if api_key:
-        return _send_via_resend(api_key, _secret("RESEND_FROM", DEFAULT_FROM),
-                                to_email, EMAIL_SUBJECT, html)
-    if _secret("SMTP_HOST"):
-        return _send_via_smtp(to_email, EMAIL_SUBJECT, html)
+
+    smtp_configured = bool(_secret("SMTP_HOST"))
+    resend_key = _secret("RESEND_API_KEY")
+
+    # 1. SMTP first (primary)
+    if smtp_configured:
+        ok, detail = _send_via_smtp(to_email, EMAIL_SUBJECT, html)
+        if ok:
+            return True, detail
+        logger.warning("SMTP delivery failed for report email: %s", detail)
+        # 2. Resend fallback after an SMTP failure
+        if resend_key:
+            ok2, detail2 = _send_via_resend(resend_key, _secret("RESEND_FROM", DEFAULT_FROM),
+                                            to_email, EMAIL_SUBJECT, html)
+            if not ok2:
+                logger.warning("Resend fallback also failed: %s", detail2)
+            return ok2, (detail2 if ok2 else f"smtp_failed[{detail}]+resend_failed[{detail2}]")
+        return False, detail
+
+    # SMTP not configured → Resend only
+    if resend_key:
+        ok, detail = _send_via_resend(resend_key, _secret("RESEND_FROM", DEFAULT_FROM),
+                                      to_email, EMAIL_SUBJECT, html)
+        if not ok:
+            logger.warning("Resend delivery failed for report email: %s", detail)
+        return ok, detail
+
+    logger.info("No email provider configured — report queued (sent=0).")
     return False, "not_configured"

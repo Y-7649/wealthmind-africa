@@ -1135,3 +1135,54 @@ def save_report_request(assessment_id, email: str, record: dict, sent: int = 0) 
         return cur.lastrowid
     finally:
         conn.close()
+
+
+def get_email_delivery_stats() -> dict:
+    """
+    Counts for the admin email-delivery view. No schema change: 'sent' rows are
+    delivered (sent=1); the rest (sent=0) are undelivered. The admin page splits
+    undelivered into queued vs failed using whether a provider is configured.
+    Returns {"total", "sent", "undelivered"}.
+    """
+    conn = get_connection()
+    try:
+        total = conn.execute("SELECT COUNT(*) AS n FROM report_requests").fetchone()["n"]
+        sent  = conn.execute("SELECT COUNT(*) AS n FROM report_requests WHERE sent = 1").fetchone()["n"]
+        return {"total": total, "sent": sent, "undelivered": total - sent}
+    finally:
+        conn.close()
+
+
+def get_undelivered_reports(limit: int = 500) -> list:
+    """
+    Undelivered report rows (sent=0) joined to their assessment, so the full
+    record needed to rebuild the email is available. Rows whose assessment_id is
+    missing/unmatched are skipped (they can't be rebuilt). Each dict carries
+    `report_id` (the report_requests row) and `email`, plus the assessment fields.
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT rr.id AS report_id, rr.email AS email, a.*
+            FROM   report_requests rr
+            JOIN   assessments a ON a.id = rr.assessment_id
+            WHERE  rr.sent = 0
+            ORDER  BY rr.id
+            LIMIT  ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def mark_report_sent(report_id: int, sent: int) -> None:
+    """Update a report_requests row's delivery flag after a (re)send attempt."""
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE report_requests SET sent = ? WHERE id = ?", (sent, report_id))
+        conn.commit()
+    finally:
+        conn.close()
