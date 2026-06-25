@@ -60,9 +60,9 @@ def _init_db():
 
 _init_db()
 
-# Public deployment URL shown on the share card / used for QR codes.
-# ▸▸ UPDATE this to your live Streamlit Cloud URL before printing QR codes ◂◂
-ASSESSMENT_URL = "wealthmind-africa.streamlit.app"
+# Public deployment URL (bare host) shown on the share card / used for QR codes.
+# Used as https://{ASSESSMENT_URL}/assessment, so it must stay scheme-less.
+ASSESSMENT_URL = "wealthmind-africa-fc2mczh6fd78tv4k86tdan.streamlit.app"
 
 # Minimum participants before the results page shows a cohort percentile.
 MIN_FOR_PERCENTILE = 10

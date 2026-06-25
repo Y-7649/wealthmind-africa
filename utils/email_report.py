@@ -42,7 +42,7 @@ from core.assessment import (
 
 EMAIL_SUBJECT = "Your WealthMind Africa Assessment Results"
 DEFAULT_FROM = "WealthMind Africa <onboarding@resend.dev>"
-DEFAULT_APP_URL = "https://wealthmind-africa.streamlit.app"
+DEFAULT_APP_URL = "https://wealthmind-africa-fc2mczh6fd78tv4k86tdan.streamlit.app"
 
 
 def _secret(key: str, default=None):
