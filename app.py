@@ -411,7 +411,10 @@ def show_landing_page():
             """
             WealthMind Africa was designed and built by **Yash Karia**, a student
             with a strong interest in Finance, Economics, Fintech, and Behavioural
-            Finance.
+            Finance. His interest in understanding financial behaviour, together
+            with certified programs completed through Harvard and Yale, led to the
+            creation of WealthMind Africa as a platform to study how young people
+            and families make financial decisions.
 
             WealthMind Africa is an independent personal finance and applied
             economics platform, built to demonstrate how software can serve as
