@@ -19,7 +19,7 @@ def render_footer():
     st.markdown(
         """
         <div style='text-align:center; color:#444455; font-size:0.8rem;
-                    padding:0.5rem 0 1rem 0;'>
+                    padding:0.5rem 0 0.25rem 0;'>
             Created by
             <strong style='color:#555566;'>Yash Karia</strong>
             &nbsp;·&nbsp;
@@ -29,6 +29,10 @@ def render_footer():
             </a>
             &nbsp;·&nbsp;
             WealthMind Africa — Applying Economic Theory to Personal Financial Behaviour
+        </div>
+        <div style='text-align:center; color:#3A3A47; font-size:0.72rem;
+                    letter-spacing:0.03em; padding:0 0 1rem 0;'>
+            WealthMind Africa • Version 1.0 • July 2026
         </div>
         """,
         unsafe_allow_html=True,
