@@ -28,7 +28,7 @@ Please take part only if you're comfortable doing so. Because the assessment is 
 
 ## Contact
 Questions about the study? Contact the creator:
-**Yash Karia — yashkaria.pro@gmail.com**
+**Yash Karia — wealthmind.insights@gmail.com**
 
 ---
 

@@ -3,7 +3,7 @@ app.py
 WealthMind Africa — Entry Point
 
 Created by Yash Karia
-Contact: yashkaria.pro@gmail.com
+Contact: wealthmind.insights@gmail.com
 
 This is the first file Streamlit executes when the application starts.
 
@@ -436,9 +436,9 @@ def show_landing_page():
                 <strong style="color:#FAFAFA; font-size:1rem;">Yash Karia</strong>
                 <br><br>
                 📧
-                <a href="mailto:yashkaria.pro@gmail.com"
+                <a href="mailto:wealthmind.insights@gmail.com"
                    style="color:#00C49F; text-decoration:none;">
-                    yashkaria.pro@gmail.com
+                    wealthmind.insights@gmail.com
                 </a>
                 <br><br>
                 🐙

@@ -278,9 +278,9 @@ st.markdown(
     <div class="fin-byline">
         By <strong style="color:#556677;">Yash Karia</strong>
         &nbsp;·&nbsp; Applied Economics Platform
-        &nbsp;·&nbsp; <a href="mailto:yashkaria.pro@gmail.com"
+        &nbsp;·&nbsp; <a href="mailto:wealthmind.insights@gmail.com"
                         style="color:#3A5060; text-decoration:none;">
-                        yashkaria.pro@gmail.com</a>
+                        wealthmind.insights@gmail.com</a>
     </div>
     """,
     unsafe_allow_html=True,

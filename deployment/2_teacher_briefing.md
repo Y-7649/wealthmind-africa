@@ -48,4 +48,4 @@ The single sentence that best captures the work:
 > *"Entirely on his own initiative, Yash designed, built, and deployed a behavioural-economics research platform, recruited ___ consenting participants across our school, his swim club, and his community, and produced a careful, honestly-reported study finding that ________, which he then presented to our economics club."*
 
 Thank you — I'm happy to walk you through the platform or the data anytime.
-**Yash Karia · yashkaria.pro@gmail.com**
+**Yash Karia · wealthmind.insights@gmail.com**

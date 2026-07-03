@@ -3,7 +3,7 @@
 **Applying Economic Theory to Personal Financial Behaviour**
 
 Created by **Yash Karia**
-Contact: [yashkaria.pro@gmail.com](mailto:yashkaria.pro@gmail.com)
+Contact: [wealthmind.insights@gmail.com](mailto:wealthmind.insights@gmail.com)
 
 ---
 
@@ -165,7 +165,7 @@ Building for this specific context reflects a core belief: **economic tools shou
 ## Creator
 
 **Yash Karia**
-📧 [yashkaria.pro@gmail.com](mailto:yashkaria.pro@gmail.com)
+📧 [wealthmind.insights@gmail.com](mailto:wealthmind.insights@gmail.com)
 🐙 GitHub: [github.com/Y-7649/wealthmind-africa](https://github.com/Y-7649/wealthmind-africa)
 
 *Interests: Finance · Economics · Fintech · Behavioural Finance · Quantitative Analysis · East African Markets*

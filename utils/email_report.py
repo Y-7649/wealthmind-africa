@@ -159,7 +159,7 @@ def build_report_html(record: dict) -> str:
   </td></tr>
 
   <tr><td style="background:#0E1117;padding:16px 28px;text-align:center;">
-    <div style="font-size:11px;color:#5A6B79;">WealthMind Africa · Applied Behavioural Economics · yashkaria.pro@gmail.com</div>
+    <div style="font-size:11px;color:#5A6B79;">WealthMind Africa · Applied Behavioural Economics · wealthmind.insights@gmail.com</div>
   </td></tr>
 
 </table>

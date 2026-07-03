@@ -96,9 +96,9 @@ with profile_right:
             </div>
             <div style='margin-bottom:0.6rem;'>
                 📧
-                <a href='mailto:yashkaria.pro@gmail.com'
+                <a href='mailto:wealthmind.insights@gmail.com'
                    style='color:#00C49F; text-decoration:none;'>
-                    yashkaria.pro@gmail.com
+                    wealthmind.insights@gmail.com
                 </a>
             </div>
             <div style='margin-bottom:0.6rem;'>

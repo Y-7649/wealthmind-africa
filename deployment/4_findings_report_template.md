@@ -1,7 +1,7 @@
 # Financial Decision-Making Among Young People and Adults in Kenya
 ### A behavioural-economics study using the WealthMind Africa assessment
 
-**Author:** Yash Karia  ·  **Date:** ______ 2026  ·  **Contact:** yashkaria.pro@gmail.com
+**Author:** Yash Karia  ·  **Date:** ______ 2026  ·  **Contact:** wealthmind.insights@gmail.com
 
 *Fill the brackets from your live Impact Report. Keep it to one page. Report honestly — including any null result.*
 

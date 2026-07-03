@@ -228,9 +228,9 @@ def render_sidebar(current_page: str = ""):
             '<div style="'
             'font-family:Inter,sans-serif;font-size:0.7rem;'
             'color:#4A6070;margin-top:0.1rem;">'
-            '<a href="mailto:yashkaria.pro@gmail.com" '
+            '<a href="mailto:wealthmind.insights@gmail.com" '
             'style="color:inherit;text-decoration:none;">'
-            'yashkaria.pro@gmail.com'
+            'wealthmind.insights@gmail.com'
             '</a>'
             '</div>'
 

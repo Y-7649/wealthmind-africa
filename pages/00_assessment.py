@@ -641,6 +641,13 @@ def render_results():
         st.code(f"https://{ASSESSMENT_URL}/assessment", language=None)
         st.caption("Copy this link to invite others to take the assessment.")
 
+    # Primary action — return to the WealthMind home / dashboard.
+    # Resets the assessment session so the flow starts fresh on the next visit,
+    # then navigates in-app (no duplicate browser history, works on mobile+desktop).
+    if st.button("← Back to Dashboard", use_container_width=True, type="primary", key="ty_home"):
+        _reset()
+        st.switch_page("app.py")
+
     render_footer()
 
 

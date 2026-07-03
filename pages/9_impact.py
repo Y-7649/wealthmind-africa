@@ -110,8 +110,8 @@ st.markdown(
     <div class="imp-byline">
         Compiled by <strong style="color:#556677;">Yash Karia</strong>
         &nbsp;·&nbsp; Aggregated, anonymised cohort data
-        &nbsp;·&nbsp; <a href="mailto:yashkaria.pro@gmail.com"
-            style="color:#3A5060; text-decoration:none;">yashkaria.pro@gmail.com</a>
+        &nbsp;·&nbsp; <a href="mailto:wealthmind.insights@gmail.com"
+            style="color:#3A5060; text-decoration:none;">wealthmind.insights@gmail.com</a>
     </div>
     """,
     unsafe_allow_html=True,

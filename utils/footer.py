@@ -23,9 +23,9 @@ def render_footer():
             Created by
             <strong style='color:#555566;'>Yash Karia</strong>
             &nbsp;·&nbsp;
-            <a href='mailto:yashkaria.pro@gmail.com'
+            <a href='mailto:wealthmind.insights@gmail.com'
                style='color:#444455; text-decoration:none;'>
-                yashkaria.pro@gmail.com
+                wealthmind.insights@gmail.com
             </a>
             &nbsp;·&nbsp;
             WealthMind Africa — Applying Economic Theory to Personal Financial Behaviour
