@@ -85,7 +85,6 @@ def _score_block(label: str, value: float, sub: str, explanation: str) -> str:
 
 def build_report_html(record: dict) -> str:
     """Build a professional, mobile-friendly HTML report from a scored record."""
-    app_url = _secret("APP_URL", DEFAULT_APP_URL).rstrip("/")
     strongest, opportunity = strongest_and_opportunity(record)
     insights = generate_assessment_insights(record)
     insight = insights[0] if insights else None
@@ -150,8 +149,7 @@ def build_report_html(record: dict) -> str:
   </td></tr>
 
   <tr><td style="padding:6px 28px 26px;" align="center">
-    <a href="{app_url}/impact" style="display:inline-block;background:#00C49F;color:#06231C;font-size:13.5px;font-weight:800;text-decoration:none;padding:12px 22px;border-radius:9px;">View the WealthMind Impact Report →</a>
-    <div style="font-size:11.5px;color:#9AA6B2;margin-top:14px;line-height:1.6;">
+    <div style="font-size:11.5px;color:#9AA6B2;line-height:1.6;">
       Your responses contribute to ongoing research into financial decision-making
       across different ages and life stages. Financial responses are stored separately
       from your email address.

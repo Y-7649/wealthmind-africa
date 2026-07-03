@@ -120,11 +120,6 @@ def render_sidebar(current_page: str = ""):
         else:
             st.page_link("pages/7_findings.py", label="📋  Findings")
 
-        if current_page == "impact":
-            st.markdown(_active_item("📊  School Impact Report"), unsafe_allow_html=True)
-        else:
-            st.page_link("pages/9_impact.py", label="📊  School Impact Report")
-
         # ── PLATFORM ─────────────────────────────────────────────────────────
 
         st.markdown(_section_label("Platform"), unsafe_allow_html=True)
@@ -181,6 +176,10 @@ def render_sidebar(current_page: str = ""):
                 st.markdown(_active_item("🔐  Admin Analytics"), unsafe_allow_html=True)
             else:
                 st.page_link("pages/8_admin.py", label="🔐  Admin Analytics")
+            if current_page == "impact":
+                st.markdown(_active_item("📊  School Impact Report"), unsafe_allow_html=True)
+            else:
+                st.page_link("pages/9_impact.py", label="📊  School Impact Report")
 
         # ── LOGGED-IN USER & SIGN OUT ─────────────────────────────────────────
 

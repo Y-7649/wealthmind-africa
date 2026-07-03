@@ -37,6 +37,21 @@ st.set_page_config(
 
 inject_global_styles()
 
+# ── AUTH GUARD (login + admin) — the Impact Report is admin-only ──────────────
+# Same enforcement as the Admin Dashboard (pages/8_admin.py): the visitor must be
+# logged in AND flagged is_admin, otherwise execution stops here — before any
+# analytics are loaded or any content is rendered.
+if not st.session_state.get("logged_in"):
+    st.warning("🔐 This page is restricted. Please sign in with an administrator account.")
+    st.page_link("app.py", label="← Back to Dashboard")
+    st.stop()
+
+_user = st.session_state.get("user") or {}
+if not _user.get("is_admin"):
+    st.error("🔐 This page is restricted to administrator accounts.")
+    st.page_link("app.py", label="← Back to Dashboard")
+    st.stop()
+
 st.markdown(
     """
     <style>

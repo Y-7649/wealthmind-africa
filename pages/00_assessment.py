@@ -626,13 +626,11 @@ def render_results():
         unsafe_allow_html=True,
     )
 
-    t1, t2, t3 = st.columns(3)
+    t1, t2 = st.columns(2)
     with t1:
         if st.button("📤 Share Assessment", use_container_width=True, key="ty_share"):
             ss.asmt_show_share = True
     with t2:
-        st.page_link("pages/9_impact.py", label="📋 View Impact Report")
-    with t3:
         if st.button("✓ Finish", use_container_width=True, key="ty_finish"):
             _reset()
             st.rerun()

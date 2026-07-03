@@ -212,8 +212,6 @@ def show_landing_page():
             st.page_link("pages/7_findings.py",
                          label="📋  Economic Findings")
         with _pub_b:
-            st.page_link("pages/9_impact.py",
-                         label="📊  School Impact Report")
             st.page_link("pages/6_about.py",
                          label="👨‍💻  About the Researcher")
 
