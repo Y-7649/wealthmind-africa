@@ -362,10 +362,11 @@ QUESTIONS = [
     },
 ]
 # NOTE: the old in-flow consent question was removed. Research participation is
-# now disclosed on the introduction and email screens, and every completed
-# assessment is saved (score_assessment defaults consent="yes"). Email/contact
-# data is captured upfront and stored SEPARATELY from the financial responses,
-# linked only by an internal assessment id (see database.save_report_request).
+# disclosed on the introduction privacy card, and every completed assessment is
+# saved (score_assessment defaults consent="yes"). No email is required to take
+# the assessment; a personalised email report is OPTIONAL and offered on the
+# results screen. Any email given is stored SEPARATELY from the financial
+# responses, linked only by an internal assessment id (database.save_report_request).
 
 
 # ── SCORING ───────────────────────────────────────────────────────────────────

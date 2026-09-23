@@ -1096,9 +1096,11 @@ def get_assessment_growth() -> list[dict]:
 
 
 # ── 8. REPORT-REQUEST OPERATIONS (optional email capture) ─────────────────────
-# Kept deliberately separate from the assessment record so the research dataset
-# stays anonymous. A report request stores an email plus a snapshot of the four
-# headline scores — never a foreign key to an assessments row.
+# Contact data is kept in its own table, separate from the financial responses.
+# A report request stores an email, a snapshot of the four headline scores, and
+# the internal `assessment_id` that links it back to its (separate) assessments
+# row. That link is what keeps the two datasets connectable for a resend without
+# ever merging email into the assessment record — separation, not anonymity.
 
 
 def save_report_request(assessment_id, email: str, record: dict, sent: int = 0) -> int:
@@ -1184,5 +1186,52 @@ def mark_report_sent(report_id: int, sent: int) -> None:
     try:
         conn.execute("UPDATE report_requests SET sent = ? WHERE id = ?", (sent, report_id))
         conn.commit()
+    finally:
+        conn.close()
+
+
+# ── 9. VERSION 1.1 EXPERIMENT OPERATIONS (separate research domain) ────────────
+# The optional behavioural mini-experiment is stored in its OWN table
+# (v11_experiments), never mixed with the Version 1.0 assessments table and
+# never scored. Anonymous — no email, no name, no user link.
+
+
+def save_experiment_response(record: dict) -> int:
+    """
+    Persist one Version 1.1 behavioural-experiment submission and return its id.
+
+    `record` carries only raw answer codes:
+        ans_time_pref, ans_windfall, ans_real_nominal
+    plus optional module_version / scenario_set labels. NO scoring happens here
+    or anywhere else — these answers never touch a WealthMind score.
+    """
+    conn = get_connection()
+    try:
+        cur = conn.execute(
+            """
+            INSERT INTO v11_experiments
+                (module_version, scenario_set,
+                 ans_time_pref, ans_windfall, ans_real_nominal)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                record.get("module_version", "1.1"),
+                record.get("scenario_set", "core3"),
+                record.get("ans_time_pref"),
+                record.get("ans_windfall"),
+                record.get("ans_real_nominal"),
+            ),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def count_experiments() -> int:
+    """Total number of Version 1.1 experiment submissions (for a light tally)."""
+    conn = get_connection()
+    try:
+        return conn.execute("SELECT COUNT(*) AS n FROM v11_experiments").fetchone()["n"]
     finally:
         conn.close()

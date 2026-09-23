@@ -32,7 +32,7 @@ def render_footer():
         </div>
         <div style='text-align:center; color:#3A3A47; font-size:0.72rem;
                     letter-spacing:0.03em; padding:0 0 1rem 0;'>
-            WealthMind Africa • Version 1.0 • July 2026
+            WealthMind Africa • Version 1.1 • September 2026
         </div>
         """,
         unsafe_allow_html=True,

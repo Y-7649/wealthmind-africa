@@ -186,23 +186,47 @@ def show_landing_page():
         st.page_link("pages/00_assessment.py",
                      label="🧭  Take the 2-Minute Financial Behaviour Assessment")
 
-        # Kenya Context CTA — public page link
+        # ── FOUR PILLARS ──────────────────────────────────────────────────────
+        # Conceptual doorways into the platform. The 2-minute assessment above
+        # remains the primary CTA; these introduce the breadth without turning
+        # the page into a feature catalogue. UNDERSTAND and SIMULATE are two
+        # facets of the one Real vs Nominal Wealth tool.
         st.markdown(
-            """
-            <div class="wm-fade-3" style="margin-bottom:1rem;">
-                <a href="/kenya_context" target="_self"
-                   style="display:inline-flex; align-items:center; gap:0.5rem;
-                          background:rgba(0,196,159,0.08);
-                          border:1px solid rgba(0,196,159,0.3);
-                          border-radius:8px; padding:0.5rem 1.1rem;
-                          color:#00C49F; font-size:0.83rem; font-weight:600;
-                          text-decoration:none; letter-spacing:0.02em;
-                          transition:background 0.2s ease;">
-                    🌍 &nbsp;Explore Kenya Economic Context
-                    <span style="font-size:0.75rem; opacity:0.7;">— no account needed</span>
-                </a>
-            </div>
-            """,
+            "<div class='wm-fade-3' style='font-size:0.7rem;font-weight:700;color:#4A6070;"
+            "text-transform:uppercase;letter-spacing:0.12em;margin:0.7rem 0 0.5rem;'>"
+            "Four ways to explore &nbsp;·&nbsp; no account needed</div>"
+
+            "<div class='wm-fade-4' style='display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;'>"
+
+            "<a href='/assessment' target='_self' class='wm-card' style='text-decoration:none;padding:0.9rem;cursor:pointer;'>"
+            "<div style='display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;'>"
+            "<span style='font-size:1.15rem;'>🧭</span>"
+            "<span style='font-size:0.66rem;font-weight:700;color:#00C49F;letter-spacing:0.14em;'>ASSESS</span></div>"
+            "<div style='color:#DDE8F4;font-size:0.85rem;font-weight:600;margin-bottom:0.1rem;'>Your financial behaviour</div>"
+            "<div style='color:#8899AA;font-size:0.76rem;line-height:1.45;'>A 2-minute behavioural snapshot.</div></a>"
+
+            "<a href='/real_wealth' target='_self' class='wm-card' style='text-decoration:none;padding:0.9rem;cursor:pointer;'>"
+            "<div style='display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;'>"
+            "<span style='font-size:1.15rem;'>💡</span>"
+            "<span style='font-size:0.66rem;font-weight:700;color:#00C49F;letter-spacing:0.14em;'>UNDERSTAND</span></div>"
+            "<div style='color:#DDE8F4;font-size:0.85rem;font-weight:600;margin-bottom:0.1rem;'>Inflation &amp; purchasing power</div>"
+            "<div style='color:#8899AA;font-size:0.76rem;line-height:1.45;'>Real vs nominal — what money is really worth.</div></a>"
+
+            "<a href='/real_wealth' target='_self' class='wm-card' style='text-decoration:none;padding:0.9rem;cursor:pointer;'>"
+            "<div style='display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;'>"
+            "<span style='font-size:1.15rem;'>📈</span>"
+            "<span style='font-size:0.66rem;font-weight:700;color:#00C49F;letter-spacing:0.14em;'>SIMULATE</span></div>"
+            "<div style='color:#DDE8F4;font-size:0.85rem;font-weight:600;margin-bottom:0.1rem;'>Growth vs inflation over time</div>"
+            "<div style='color:#8899AA;font-size:0.76rem;line-height:1.45;'>Watch a number grow yet buy less.</div></a>"
+
+            "<a href='/experiments' target='_self' class='wm-card' style='text-decoration:none;padding:0.9rem;cursor:pointer;'>"
+            "<div style='display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;'>"
+            "<span style='font-size:1.15rem;'>🔬</span>"
+            "<span style='font-size:0.66rem;font-weight:700;color:#00C49F;letter-spacing:0.14em;'>EXPLORE</span></div>"
+            "<div style='color:#DDE8F4;font-size:0.85rem;font-weight:600;margin-bottom:0.1rem;'>Behavioural experiments</div>"
+            "<div style='color:#8899AA;font-size:0.76rem;line-height:1.45;'>Try a 60-second decision experiment.</div></a>"
+
+            "</div>",
             unsafe_allow_html=True,
         )
         _pub_a, _pub_b = st.columns(2)
@@ -215,38 +239,12 @@ def show_landing_page():
             st.page_link("pages/6_about.py",
                          label="👨‍💻  About the Researcher")
 
-        # Four module cards — 2 × 2 grid
-        # NOTE: Every opening HTML tag must close on the same line —
-        # Streamlit's Markdown parser only recognises HTML blocks when
-        # the opening tag's closing '>' is on the same line as '<div'.
+        # A single, tasteful line of academic grounding — the depth lives on the
+        # dedicated module pages, so the landing stays uncluttered.
         st.markdown(
-            '<div class="wm-fade-4" style="display:grid; grid-template-columns:1fr 1fr; gap:0.65rem;">'
-
-            '<div class="wm-card" style="padding:0.9rem;">'
-            '<div style="font-size:0.93rem; font-weight:600; margin-bottom:0.35rem; color:#DDE8F4;">📊 Financial Health Score</div>'
-            '<div style="color:#8899AA; font-size:0.79rem; line-height:1.55;">Composite index — savings rate, emergency fund, spending consistency, investment commitment.</div>'
-            '<div style="margin-top:0.5rem; font-size:0.71rem; color:#3A5060; font-style:italic;">Friedman (1957) · Deaton (1991) · Hall (1978)</div>'
-            '</div>'
-
-            '<div class="wm-card" style="padding:0.9rem;">'
-            '<div style="font-size:0.93rem; font-weight:600; margin-bottom:0.35rem; color:#DDE8F4;">🇰🇪 Kenya Inflation Context</div>'
-            '<div style="color:#8899AA; font-size:0.79rem; line-height:1.55;">Fisher equation applied to personal spending. Real vs nominal using KNBS CPI data.</div>'
-            '<div style="margin-top:0.5rem; font-size:0.71rem; color:#3A5060; font-style:italic;">Fisher equation · KNBS CPI methodology</div>'
-            '</div>'
-
-            '<div class="wm-card" style="padding:0.9rem;">'
-            '<div style="font-size:0.93rem; font-weight:600; margin-bottom:0.35rem; color:#DDE8F4;">📈 Wealth Projection</div>'
-            '<div style="color:#8899AA; font-size:0.79rem; line-height:1.55;">Compound growth over 25 years. Interactive savings rate slider. NSE-calibrated return assumptions.</div>'
-            '<div style="margin-top:0.5rem; font-size:0.71rem; color:#3A5060; font-style:italic;">Solow growth model · Fisher (1930) · Modigliani (1954)</div>'
-            '</div>'
-
-            '<div class="wm-card" style="padding:0.9rem;">'
-            '<div style="font-size:0.93rem; font-weight:600; margin-bottom:0.35rem; color:#DDE8F4;">🧠 Present Bias Detection</div>'
-            '<div style="color:#8899AA; font-size:0.79rem; line-height:1.55;">Laibson\'s hyperbolic discounting model tested against your first-week vs last-week spending ratio.</div>'
-            '<div style="margin-top:0.5rem; font-size:0.71rem; color:#3A5060; font-style:italic;">Laibson (1997) · O\'Donoghue &amp; Rabin (1999)</div>'
-            '</div>'
-
-            '</div>',
+            "<div class='wm-fade-4' style='color:#3A5060;font-size:0.75rem;font-style:italic;"
+            "margin-top:0.9rem;line-height:1.6;'>Grounded in behavioural economics — "
+            "Friedman, Fisher, Modigliani, Laibson — applied to a Kenyan context.</div>",
             unsafe_allow_html=True,
         )
 

@@ -156,12 +156,16 @@ CREATE INDEX IF NOT EXISTS idx_assessments_created
     ON assessments(created_at);
 
 -- ============================================================
--- REPORT_REQUESTS
+-- REPORT_REQUESTS  (data domain C — optional contact / email)
 -- Optional email capture for participants who want a personalised report.
--- Stored SEPARATELY from the anonymous assessments table, so the research
--- dataset stays anonymous: this table holds an email plus a snapshot of the
--- scores to send, never a link back to an assessment row. Only written when a
--- participant opts in AFTER seeing their results (never required to finish).
+-- Contact data is stored SEPARATELY from the financial responses: the email
+-- lives here, the financial answers live in the assessments table. The two are
+-- connected only by the internal assessment_id below (never merged into one
+-- row, and no email column is ever added to assessments). This is separation,
+-- not absolute anonymity: assessment_id is an internal link an administrator
+-- could in principle follow, so participant-facing wording says 'stored
+-- separately', never 'can never be linked'. Only written when a participant
+-- opts in AFTER seeing their results (email is never required to finish).
 -- (No semicolons in these comments — the libSQL adapter splits on semicolons.)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS report_requests (
@@ -181,3 +185,29 @@ CREATE TABLE IF NOT EXISTS report_requests (
 
 CREATE INDEX IF NOT EXISTS idx_report_requests_created
     ON report_requests(created_at);
+
+-- ============================================================
+-- V11_EXPERIMENTS  (data domain B — Version 1.1 experimental)
+-- Responses to the OPTIONAL Version 1.1 behavioural-finance mini-experiment.
+-- Kept in its own table, completely separate from the Version 1.0 assessments
+-- table, so it is impossible for these answers to leak into the original
+-- research instrument. Nothing here feeds the Financial Health, Present Bias,
+-- Savings, Consistency or Resilience scores — this is exploratory data only.
+-- Anonymous: no email, no name, no user link. Written only on submit.
+-- (No semicolons in these comments — the libSQL adapter splits on semicolons.)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS v11_experiments (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at        TEXT    NOT NULL DEFAULT (DATETIME('now')),
+    module_version    TEXT    NOT NULL DEFAULT '1.1',
+    scenario_set      TEXT    NOT NULL DEFAULT 'core3',
+
+    -- Raw answer codes — one per scenario. Meaning documented in
+    -- pages/11_experiments.py. Never scored, only aggregated.
+    ans_time_pref     TEXT,   -- immediate vs delayed reward
+    ans_windfall      TEXT,   -- windfall allocation (spend/save/invest/split)
+    ans_real_nominal  TEXT    -- nominal vs real wealth understanding
+);
+
+CREATE INDEX IF NOT EXISTS idx_v11_experiments_created
+    ON v11_experiments(created_at);

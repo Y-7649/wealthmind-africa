@@ -155,13 +155,15 @@ st.markdown(
 # ── STATE ─────────────────────────────────────────────────────────────────────
 
 ss = st.session_state
-ss.setdefault("asmt_phase", "intro")     # intro | email | questions | results
+ss.setdefault("asmt_phase", "intro")     # intro | questions | results  (no email gate)
 ss.setdefault("asmt_qidx", 0)
 ss.setdefault("asmt_answers", {"currency": "KES"})
 ss.setdefault("asmt_saved", False)
 ss.setdefault("asmt_result", None)
+ss.setdefault("asmt_assessment_id", None)  # id of the saved (separate) financial row
 ss.setdefault("asmt_email", "")
 ss.setdefault("asmt_send_ok", False)
+ss.setdefault("asmt_email_done", False)    # has the optional email step been resolved?
 ss.setdefault("asmt_show_share", False)
 
 TOTAL = len(QUESTIONS)
@@ -173,8 +175,10 @@ def _reset():
     ss.asmt_answers = {"currency": "KES"}
     ss.asmt_saved = False
     ss.asmt_result = None
+    ss.asmt_assessment_id = None
     ss.asmt_email = ""
     ss.asmt_send_ok = False
+    ss.asmt_email_done = False
     ss.asmt_show_share = False
 
 
@@ -186,36 +190,28 @@ def _valid_email(value: str) -> bool:
 
 def _finalize():
     """
-    Score, save the financial responses, store the email separately (linked by
-    the internal assessment id), send the report, and move to results.
-    Runs once (guarded) at the end of the question flow.
+    Score the answers and save the ANONYMOUS financial responses, then move to
+    results. Runs once (guarded) at the end of the question flow.
+
+    Email is deliberately NOT handled here. Under the privacy-first flow a
+    participant completes the assessment and sees every result WITHOUT providing
+    any contact information — the optional email report is offered afterwards on
+    the results screen (see render_results). Nothing about a participant's
+    identity is stored alongside their financial answers here.
     """
     if ss.asmt_saved:
         ss.asmt_phase = "results"
         return
 
     record = score_assessment(ss.asmt_answers)
-    email = ss.asmt_email
 
-    # 1. Save the financial responses (always — research use disclosed upfront).
+    # Save the financial responses only (no email, no name). consent defaults to
+    # 'yes'; research use is disclosed on the intro privacy card.
     assessment_id = save_assessment(record)
-
-    # 2. Send the personalised report (best-effort; never blocks the results).
-    send_ok = False
-    try:
-        send_ok, _ = send_report_email(email, record)
-    except Exception:
-        send_ok = False
-
-    # 3. Store the email SEPARATELY, linked only by the internal id.
-    try:
-        save_report_request(assessment_id, email, record, sent=1 if send_ok else 0)
-    except Exception:
-        pass
 
     ss.asmt_saved = True
     ss.asmt_result = record
-    ss.asmt_send_ok = send_ok
+    ss.asmt_assessment_id = assessment_id
     ss.asmt_phase = "results"
 
 
@@ -255,11 +251,22 @@ def render_intro():
                 <div style="color:#DDE8F4;font-size:0.92rem;">🧠 &nbsp;Present Bias</div>
             </div>
         </div>
-        <div class="wm-fade-3" style="color:#8899AA;font-size:0.86rem;line-height:1.6;
-             text-align:center;max-width:540px;margin:0 auto 0.3rem;">
-            Your results will be emailed to you after completion. Your financial
-            responses are stored separately from your email address. Your anonymous
-            responses contribute to ongoing research into financial decision-making.
+        <div class="wm-fade-3" style="background:linear-gradient(145deg,#0F1824,#0C121C);
+             border:1px solid rgba(0,196,159,0.22);border-radius:14px;
+             padding:1.05rem 1.25rem;margin:0.3rem 0 0.2rem;max-width:560px;
+             margin-left:auto;margin-right:auto;">
+            <div style="font-size:0.9rem;font-weight:700;color:#00C49F;margin-bottom:0.6rem;">
+                🔒 Your Privacy Matters
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 1.1rem;
+                 color:#9FB0C0;font-size:0.8rem;line-height:1.5;">
+                <div>✓&nbsp; No email or sign-up needed to take it</div>
+                <div>✓&nbsp; Individual answers are never shown publicly</div>
+                <div>✓&nbsp; Used for research only in anonymised, aggregated form</div>
+                <div>✓&nbsp; A personalised email report is entirely optional</div>
+                <div>✓&nbsp; Any email you give is stored separately from your answers</div>
+                <div>✓&nbsp; We never sell your email or use it for marketing</div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -267,49 +274,14 @@ def render_intro():
     _, mid, _ = st.columns([1, 2, 1])
     with mid:
         if st.button("Start Assessment  →", use_container_width=True, type="primary", key="begin"):
-            ss.asmt_phase = "email"
+            ss.asmt_phase = "questions"
+            ss.asmt_qidx = 0
             st.rerun()
-
-
-# ── EMAIL (required, before any questions) ────────────────────────────────────
-
-def render_email():
-    if st.button("←  Back", key="email_back"):
-        ss.asmt_phase = "intro"
-        st.rerun()
-
     st.markdown(
-        """
-        <div style="text-align:center;padding:0.8rem 0 0.2rem;">
-            <h1 style="font-size:1.7rem;color:#E2E8F0;letter-spacing:-0.03em;
-                       line-height:1.25;margin:0 0 0.6rem;">
-                Where should we send your report?
-            </h1>
-            <p style="color:#8899AA;font-size:0.9rem;line-height:1.6;max-width:520px;margin:0 auto;">
-                Your personalised assessment report will be emailed to you after
-                completion. Your financial responses remain separate from your contact
-                information. Your email may also be used to share future findings from
-                the WealthMind Africa study.
-            </p>
-        </div>
-        """,
+        "<div style='text-align:center;color:#4A6070;font-size:0.78rem;margin-top:0.5rem;'>"
+        "Takes about 2 minutes · No account · No email required</div>",
         unsafe_allow_html=True,
     )
-    email = st.text_input(
-        "Email address", key="entry_email", placeholder="you@example.com",
-        value=ss.asmt_email, label_visibility="collapsed",
-    )
-    _, mid, _ = st.columns([1, 2, 1])
-    with mid:
-        if st.button("Continue  →", use_container_width=True, type="primary", key="email_continue"):
-            if _valid_email(email):
-                ss.asmt_email = email.strip()
-                ss.asmt_phase = "questions"
-                ss.asmt_qidx = 0
-                st.rerun()
-            else:
-                st.warning("Please enter a valid email address to continue.")
-    st.caption("🔒 We never display your email, and it is never stored with your financial answers.")
 
 
 # ── QUESTION ──────────────────────────────────────────────────────────────────
@@ -607,11 +579,68 @@ def render_results():
 
     st.divider()
 
-    # ── REPORT CONFIRMATION ───────────────────────────────────────────────────
-    if ss.asmt_send_ok:
-        st.success(f"📧 Your report has been sent to **{ss.asmt_email}**.")
+    # ── OPTIONAL EMAIL REPORT ─────────────────────────────────────────────────
+    # Privacy-first: the participant has already seen every result above without
+    # giving any contact details. Here they may OPTIONALLY receive a copy. If they
+    # continue without an email, NO contact record is created and NO email is sent.
+    if not ss.asmt_email_done:
+        st.markdown(
+            "<div style='background:linear-gradient(145deg,#0F1824,#0A1018);"
+            "border:1px solid rgba(0,196,159,0.2);border-radius:14px;"
+            "padding:1.15rem 1.3rem;margin:0.2rem 0 0.7rem;'>"
+            "<div style='font-size:1rem;font-weight:700;color:#E2E8F0;margin-bottom:0.3rem;'>"
+            "📧 Save Your Personalised Report</div>"
+            "<div style='color:#8899AA;font-size:0.85rem;line-height:1.55;'>"
+            "Optional — enter an email to receive a copy of these results. Your email "
+            "is stored separately from your financial answers, and is never sold or "
+            "used for marketing. You don't need to provide one.</div></div>",
+            unsafe_allow_html=True,
+        )
+        email = st.text_input(
+            "Email address", key="results_email", placeholder="you@example.com",
+            value=ss.asmt_email, label_visibility="collapsed",
+        )
+        e1, e2 = st.columns(2)
+        with e1:
+            if st.button("📩 Email My Report", use_container_width=True,
+                         type="primary", key="email_send"):
+                if _valid_email(email):
+                    ss.asmt_email = email.strip()
+                    send_ok = False
+                    try:
+                        send_ok, _ = send_report_email(ss.asmt_email, rec)
+                    except Exception:
+                        send_ok = False
+                    # Store the email SEPARATELY, linked only by the internal id.
+                    try:
+                        save_report_request(ss.asmt_assessment_id, ss.asmt_email, rec,
+                                            sent=1 if send_ok else 0)
+                    except Exception:
+                        pass
+                    ss.asmt_send_ok = send_ok
+                    ss.asmt_email_done = True
+                    st.rerun()
+                else:
+                    st.warning("Please enter a valid email, or choose "
+                               "“Continue without Email”.")
+        with e2:
+            if st.button("Continue without Email", use_container_width=True,
+                         key="email_skip"):
+                ss.asmt_email = ""          # nothing entered
+                ss.asmt_send_ok = False
+                ss.asmt_email_done = True   # no contact record, no delivery
+                st.rerun()
     else:
-        st.info("📧 Your report is being prepared and will be sent shortly.")
+        if ss.asmt_email and ss.asmt_send_ok:
+            st.success(f"📧 Your report has been sent to **{ss.asmt_email}**.")
+        elif ss.asmt_email and not ss.asmt_send_ok:
+            st.info("📧 Your report is queued and will be sent shortly. "
+                    "Your results are shown above.")
+        else:
+            st.caption("You chose to continue without an email — no contact "
+                       "details were stored. Your results are shown above.")
+
+    st.divider()
 
     # ── THANK YOU ─────────────────────────────────────────────────────────────
     st.markdown(
@@ -653,8 +682,6 @@ def render_results():
 
 if ss.asmt_phase == "intro":
     render_intro()
-elif ss.asmt_phase == "email":
-    render_email()
 elif ss.asmt_phase == "questions":
     render_question(QUESTIONS[ss.asmt_qidx])
 else:

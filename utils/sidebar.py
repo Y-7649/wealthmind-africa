@@ -120,6 +120,16 @@ def render_sidebar(current_page: str = ""):
         else:
             st.page_link("pages/7_findings.py", label="📋  Findings")
 
+        if current_page == "real_wealth":
+            st.markdown(_active_item("💡  Real vs Nominal Wealth"), unsafe_allow_html=True)
+        else:
+            st.page_link("pages/10_real_wealth.py", label="💡  Real vs Nominal Wealth")
+
+        if current_page == "experiments":
+            st.markdown(_active_item("🔬  Behavioural Lab"), unsafe_allow_html=True)
+        else:
+            st.page_link("pages/11_experiments.py", label="🔬  Behavioural Lab")
+
         # ── PLATFORM ─────────────────────────────────────────────────────────
 
         st.markdown(_section_label("Platform"), unsafe_allow_html=True)
